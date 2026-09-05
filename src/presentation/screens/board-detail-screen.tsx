@@ -197,6 +197,11 @@ export function BoardDetailScreen({ boardId }: Props) {
                 </Paragraph>
               </YStack>
 
+              <AppButton
+                label="Ver tareas"
+                onPress={() => router.push(`/board/${board.id}/tasks` as any)}
+              />
+
               {deleteError ? <Paragraph color="$danger">{deleteError}</Paragraph> : null}
 
               {isOwner ? (
