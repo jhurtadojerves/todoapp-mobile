@@ -1,14 +1,14 @@
 import { Board, BoardInput } from '@/domain/models/board';
 import { PaginatedResponse } from '@/domain/models/pagination';
 import { apiFetch } from '@/shared/api/http-client';
+import { buildQueryString } from '@/shared/api/query-string';
 
 const BOARDS_PATH = '/api/v1/boards/';
 const boardDetailPath = (id: number) => `${BOARDS_PATH}${id}/`;
 
 export class BoardDataSource {
-  async fetchBoards(token: string): Promise<Board[]> {
-    const data = await apiFetch<PaginatedResponse<Board> | Board[]>(BOARDS_PATH, { token });
-    return Array.isArray(data) ? data : data.results;
+  fetchBoards(token: string, page: number): Promise<PaginatedResponse<Board>> {
+    return apiFetch<PaginatedResponse<Board>>(`${BOARDS_PATH}${buildQueryString({ page })}`, { token });
   }
 
   fetchBoard(token: string, id: number): Promise<Board> {

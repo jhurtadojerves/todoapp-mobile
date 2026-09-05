@@ -32,9 +32,9 @@ export function useTaskFormViewModel(boardId: number, taskId?: number) {
     setError(null);
 
     const loadOptions = Promise.all([
-      dependencies.getStatusesUseCase.execute(token, boardId),
-      dependencies.getSprintsUseCase.execute(token, boardId),
-      dependencies.getMembersUseCase.execute(token, boardId),
+      dependencies.getStatusesUseCase.execute(token, boardId, 1),
+      dependencies.getSprintsUseCase.execute(token, boardId, 1),
+      dependencies.getMembersUseCase.execute(token, boardId, 1),
     ]);
     const loadTask: Promise<Task | null> = isEditing
       ? dependencies.getTaskUseCase.execute(token, taskId)
@@ -43,9 +43,9 @@ export function useTaskFormViewModel(boardId: number, taskId?: number) {
     Promise.all([loadOptions, loadTask])
       .then(([[statusesResult, sprintsResult, membersResult], task]) => {
         if (!isMounted) return;
-        setStatuses(statusesResult);
-        setSprints(sprintsResult);
-        setMembers(membersResult);
+        setStatuses(statusesResult.results);
+        setSprints(sprintsResult.results);
+        setMembers(membersResult.results);
         if (task) {
           setTitleValue(task.title);
           setDescription(task.description);

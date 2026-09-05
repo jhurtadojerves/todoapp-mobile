@@ -24,6 +24,9 @@ export function BoardDetailScreen({ boardId }: Props) {
   const {
     members,
     isLoading: isLoadingMembers,
+    isLoadingMore: isLoadingMoreMembers,
+    hasMore: hasMoreMembers,
+    loadMore: loadMoreMembers,
     error: membersError,
     isOwner,
     inviteEmail,
@@ -34,10 +37,14 @@ export function BoardDetailScreen({ boardId }: Props) {
     removingId,
     removeError,
     removeMember,
+    reload: reloadMembers,
   } = useBoardMembersViewModel(boardId);
   const {
     statuses,
     isLoading: isLoadingStatuses,
+    isLoadingMore: isLoadingMoreStatuses,
+    hasMore: hasMoreStatuses,
+    loadMore: loadMoreStatuses,
     error: statusesError,
     newName,
     setNewName,
@@ -55,10 +62,14 @@ export function BoardDetailScreen({ boardId }: Props) {
     deletingId: deletingStatusId,
     deleteError: deleteStatusError,
     deleteStatus,
+    reload: reloadStatuses,
   } = useBoardStatusesViewModel(boardId);
   const {
     sprints,
     isLoading: isLoadingSprints,
+    isLoadingMore: isLoadingMoreSprints,
+    hasMore: hasMoreSprints,
+    loadMore: loadMoreSprints,
     error: sprintsError,
     newName: newSprintName,
     setNewName: setNewSprintName,
@@ -84,6 +95,7 @@ export function BoardDetailScreen({ boardId }: Props) {
     deletingId: deletingSprintId,
     deleteError: deleteSprintError,
     deleteSprint,
+    reload: reloadSprints,
   } = useBoardSprintsViewModel(boardId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -253,13 +265,19 @@ export function BoardDetailScreen({ boardId }: Props) {
                 {isLoadingMembers ? (
                   <Spinner />
                 ) : membersError ? (
-                  <Paragraph color="$danger">{membersError}</Paragraph>
+                  <YStack gap="$3" alignItems="flex-start">
+                    <Paragraph color="$danger">{membersError}</Paragraph>
+                    <AppButton label="Reintentar" variant="outlined" width={160} onPress={reloadMembers} />
+                  </YStack>
                 ) : (
                   <MemberList
                     members={members}
                     isOwner={isOwner}
                     removingId={removingId}
                     onRemove={handleRemove}
+                    hasMore={hasMoreMembers}
+                    isLoadingMore={isLoadingMoreMembers}
+                    onLoadMore={loadMoreMembers}
                   />
                 )}
               </YStack>
@@ -291,7 +309,10 @@ export function BoardDetailScreen({ boardId }: Props) {
                 {isLoadingStatuses ? (
                   <Spinner />
                 ) : statusesError ? (
-                  <Paragraph color="$danger">{statusesError}</Paragraph>
+                  <YStack gap="$3" alignItems="flex-start">
+                    <Paragraph color="$danger">{statusesError}</Paragraph>
+                    <AppButton label="Reintentar" variant="outlined" width={160} onPress={reloadStatuses} />
+                  </YStack>
                 ) : (
                   <StatusList
                     statuses={statuses}
@@ -306,6 +327,9 @@ export function BoardDetailScreen({ boardId }: Props) {
                     onSaveEdit={handleSaveStatusEdit}
                     deletingId={deletingStatusId}
                     onDelete={handleDeleteStatus}
+                    hasMore={hasMoreStatuses}
+                    isLoadingMore={isLoadingMoreStatuses}
+                    onLoadMore={loadMoreStatuses}
                   />
                 )}
               </YStack>
@@ -355,7 +379,10 @@ export function BoardDetailScreen({ boardId }: Props) {
                 {isLoadingSprints ? (
                   <Spinner />
                 ) : sprintsError ? (
-                  <Paragraph color="$danger">{sprintsError}</Paragraph>
+                  <YStack gap="$3" alignItems="flex-start">
+                    <Paragraph color="$danger">{sprintsError}</Paragraph>
+                    <AppButton label="Reintentar" variant="outlined" width={160} onPress={reloadSprints} />
+                  </YStack>
                 ) : (
                   <SprintList
                     sprints={sprints}
@@ -374,6 +401,9 @@ export function BoardDetailScreen({ boardId }: Props) {
                     onSaveEdit={handleSaveSprintEdit}
                     deletingId={deletingSprintId}
                     onDelete={handleDeleteSprint}
+                    hasMore={hasMoreSprints}
+                    isLoadingMore={isLoadingMoreSprints}
+                    onLoadMore={loadMoreSprints}
                   />
                 )}
               </YStack>

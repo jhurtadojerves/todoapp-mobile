@@ -44,9 +44,9 @@ describe('Board statuses flow (integration)', () => {
       mockResponse(200, { count: 2, next: null, previous: null, results: [toDo, inProgress] })
     );
 
-    const result = await getStatusesUseCase.execute('valid-token', 1);
+    const result = await getStatusesUseCase.execute('valid-token', 1, 1);
 
-    expect(result).toEqual([toDo, inProgress]);
+    expect(result.results).toEqual([toDo, inProgress]);
   });
 
   it('should create a status and return it', async () => {

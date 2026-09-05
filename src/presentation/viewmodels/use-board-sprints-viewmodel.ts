@@ -16,7 +16,10 @@ function isValidDate(value: string): boolean {
 export function useBoardSprintsViewModel(boardId: number) {
   const { token } = useAuth();
   const [sprints, setSprints] = useState<Sprint[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [newName, setNewName] = useState('');
@@ -35,28 +38,47 @@ export function useBoardSprintsViewModel(boardId: number) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const loadSprints = useCallback(() => {
-    if (!token) return;
+  const loadPage = useCallback(
+    (pageNumber: number, append: boolean) => {
+      if (!token) return;
 
-    setIsLoading(true);
-    setError(null);
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
 
-    return dependencies.getSprintsUseCase
-      .execute(token, boardId)
-      .then((payload) => {
-        setSprints(payload);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'No se pudieron cargar los sprints.');
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [token, boardId]);
+      return dependencies.getSprintsUseCase
+        .execute(token, boardId, pageNumber)
+        .then((result) => {
+          setSprints((prev) => (append ? [...prev, ...result.results] : result.results));
+          setHasMore(Boolean(result.next));
+          setPage(pageNumber);
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : 'No se pudieron cargar los sprints.');
+        })
+        .finally(() => {
+          if (append) {
+            setIsLoadingMore(false);
+          } else {
+            setIsLoading(false);
+          }
+        });
+    },
+    [token, boardId]
+  );
 
   useEffect(() => {
-    loadSprints();
-  }, [loadSprints]);
+    loadPage(1, false);
+  }, [loadPage]);
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !isLoadingMore) {
+      loadPage(page + 1, true);
+    }
+  }, [hasMore, isLoadingMore, loadPage, page]);
 
   const createSprint = async (): Promise<void> => {
     setCreateError(null);
@@ -86,7 +108,7 @@ export function useBoardSprintsViewModel(boardId: number) {
       setNewName('');
       setNewStartDate('');
       setNewEndDate('');
-      await loadSprints();
+      await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo crear el sprint.';
       setCreateError(message);
@@ -139,7 +161,7 @@ export function useBoardSprintsViewModel(boardId: number) {
       };
       await dependencies.updateSprintUseCase.execute(token, boardId, editingId, input);
       cancelEdit();
-      await loadSprints();
+      await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo actualizar el sprint.';
       setEditError(message);
@@ -158,7 +180,7 @@ export function useBoardSprintsViewModel(boardId: number) {
     setDeleteError(null);
     try {
       await dependencies.deleteSprintUseCase.execute(token, boardId, id);
-      await loadSprints();
+      await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo eliminar el sprint.';
       setDeleteError(message);
@@ -171,6 +193,9 @@ export function useBoardSprintsViewModel(boardId: number) {
   return {
     sprints,
     isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
     error,
     newName,
     setNewName,
@@ -196,5 +221,6 @@ export function useBoardSprintsViewModel(boardId: number) {
     deletingId,
     deleteError,
     deleteSprint,
+    reload: () => loadPage(1, false),
   };
 }

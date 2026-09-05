@@ -175,5 +175,6 @@ export function useTaskCommentsViewModel(taskId: number) {
     deletingId,
     deleteError,
     deleteComment,
+    reload: () => loadPage(1, false),
   };
 }

@@ -1,6 +1,7 @@
 import { GetBoardsUseCase } from '@/domain/usecases/get-boards';
 import { BoardRepository } from '@/domain/repositories/board-repository';
 import { Board } from '@/domain/models/board';
+import { PaginatedResponse } from '@/domain/models/pagination';
 
 const mockBoardRepository: jest.Mocked<BoardRepository> = {
   fetchBoards: jest.fn(),
@@ -10,16 +11,15 @@ const mockBoardRepository: jest.Mocked<BoardRepository> = {
   deleteBoard: jest.fn(),
 };
 
-const boards: Board[] = [
-  {
-    id: 1,
-    name: 'Sprint board',
-    description: '',
-    user_id: 7,
-    created: '2026-01-01T00:00:00Z',
-    modified: '2026-01-01T00:00:00Z',
-  },
-];
+const board: Board = {
+  id: 1,
+  name: 'Sprint board',
+  description: '',
+  user_id: 7,
+  created: '2026-01-01T00:00:00Z',
+  modified: '2026-01-01T00:00:00Z',
+};
+const page: PaginatedResponse<Board> = { count: 1, next: null, previous: null, results: [board] };
 
 describe('GetBoardsUseCase', () => {
   let useCase: GetBoardsUseCase;
@@ -29,25 +29,25 @@ describe('GetBoardsUseCase', () => {
     useCase = new GetBoardsUseCase(mockBoardRepository);
   });
 
-  it('should call boardRepository.fetchBoards with the given token', async () => {
-    mockBoardRepository.fetchBoards.mockResolvedValue(boards);
+  it('should call boardRepository.fetchBoards with the given token and page', async () => {
+    mockBoardRepository.fetchBoards.mockResolvedValue(page);
 
-    await useCase.execute('valid-token');
+    await useCase.execute('valid-token', 1);
 
-    expect(mockBoardRepository.fetchBoards).toHaveBeenCalledWith('valid-token');
+    expect(mockBoardRepository.fetchBoards).toHaveBeenCalledWith('valid-token', 1);
   });
 
-  it('should return the boards from the repository', async () => {
-    mockBoardRepository.fetchBoards.mockResolvedValue(boards);
+  it('should return the paginated response from the repository', async () => {
+    mockBoardRepository.fetchBoards.mockResolvedValue(page);
 
-    const result = await useCase.execute('valid-token');
+    const result = await useCase.execute('valid-token', 1);
 
-    expect(result).toEqual(boards);
+    expect(result).toEqual(page);
   });
 
   it('should propagate errors thrown by the repository', async () => {
     mockBoardRepository.fetchBoards.mockRejectedValue(new Error('Token is expired.'));
 
-    await expect(useCase.execute('expired-token')).rejects.toThrow('Token is expired.');
+    await expect(useCase.execute('expired-token', 1)).rejects.toThrow('Token is expired.');
   });
 });

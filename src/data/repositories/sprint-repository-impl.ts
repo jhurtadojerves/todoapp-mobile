@@ -1,12 +1,13 @@
 import { SprintDataSource } from '@/data/datasources/sprint-datasource';
 import { Sprint, SprintInput } from '@/domain/models/sprint';
+import { PaginatedResponse } from '@/domain/models/pagination';
 import { SprintRepository } from '@/domain/repositories/sprint-repository';
 
 export class SprintRepositoryImpl implements SprintRepository {
   constructor(private readonly dataSource: SprintDataSource) {}
 
-  fetchSprints(token: string, boardId: number): Promise<Sprint[]> {
-    return this.dataSource.fetchSprints(token, boardId);
+  fetchSprints(token: string, boardId: number, page: number): Promise<PaginatedResponse<Sprint>> {
+    return this.dataSource.fetchSprints(token, boardId, page);
   }
 
   createSprint(token: string, boardId: number, input: SprintInput): Promise<Sprint> {

@@ -1,6 +1,7 @@
 import { GetMembersUseCase } from '@/domain/usecases/get-members';
 import { MembershipRepository } from '@/domain/repositories/membership-repository';
 import { BoardMembership } from '@/domain/models/membership';
+import { PaginatedResponse } from '@/domain/models/pagination';
 
 const mockMembershipRepository: jest.Mocked<MembershipRepository> = {
   fetchMembers: jest.fn(),
@@ -8,15 +9,14 @@ const mockMembershipRepository: jest.Mocked<MembershipRepository> = {
   removeMember: jest.fn(),
 };
 
-const members: BoardMembership[] = [
-  {
-    id: 5,
-    board_id: 1,
-    user: { id: 2, username: 'jane', email: 'jane@example.com' },
-    role: 'member',
-    created: '2026-01-01T00:00:00Z',
-  },
-];
+const membership: BoardMembership = {
+  id: 5,
+  board_id: 1,
+  user: { id: 2, username: 'jane', email: 'jane@example.com' },
+  role: 'member',
+  created: '2026-01-01T00:00:00Z',
+};
+const page: PaginatedResponse<BoardMembership> = { count: 1, next: null, previous: null, results: [membership] };
 
 describe('GetMembersUseCase', () => {
   let useCase: GetMembersUseCase;
@@ -26,20 +26,20 @@ describe('GetMembersUseCase', () => {
     useCase = new GetMembersUseCase(mockMembershipRepository);
   });
 
-  it('should call membershipRepository.fetchMembers with the given token and board id', async () => {
-    mockMembershipRepository.fetchMembers.mockResolvedValue(members);
+  it('should call membershipRepository.fetchMembers with the given token, board id and page', async () => {
+    mockMembershipRepository.fetchMembers.mockResolvedValue(page);
 
-    await useCase.execute('valid-token', 1);
+    await useCase.execute('valid-token', 1, 1);
 
-    expect(mockMembershipRepository.fetchMembers).toHaveBeenCalledWith('valid-token', 1);
+    expect(mockMembershipRepository.fetchMembers).toHaveBeenCalledWith('valid-token', 1, 1);
   });
 
-  it('should return the members from the repository', async () => {
-    mockMembershipRepository.fetchMembers.mockResolvedValue(members);
+  it('should return the paginated response from the repository', async () => {
+    mockMembershipRepository.fetchMembers.mockResolvedValue(page);
 
-    const result = await useCase.execute('valid-token', 1);
+    const result = await useCase.execute('valid-token', 1, 1);
 
-    expect(result).toEqual(members);
+    expect(result).toEqual(page);
   });
 
   it('should propagate errors thrown by the repository', async () => {
@@ -47,7 +47,7 @@ describe('GetMembersUseCase', () => {
       new Error('You do not have permission to perform this action.')
     );
 
-    await expect(useCase.execute('valid-token', 1)).rejects.toThrow(
+    await expect(useCase.execute('valid-token', 1, 1)).rejects.toThrow(
       'You do not have permission to perform this action.'
     );
   });

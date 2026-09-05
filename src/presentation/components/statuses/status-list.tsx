@@ -1,7 +1,8 @@
-import { Paragraph, YStack } from 'tamagui';
+import { Paragraph, Spinner, YStack } from 'tamagui';
 
 import { BoardStatus } from '@/domain/models/status';
 import { StatusRow } from '@/presentation/components/statuses/status-row';
+import { AppButton } from '@/presentation/components/ui';
 
 type Props = {
   statuses: BoardStatus[];
@@ -16,6 +17,9 @@ type Props = {
   onSaveEdit: () => void;
   deletingId: number | null;
   onDelete: (id: number) => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 };
 
 export function StatusList({
@@ -31,6 +35,9 @@ export function StatusList({
   onSaveEdit,
   deletingId,
   onDelete,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
 }: Props) {
   if (statuses.length === 0) {
     return (
@@ -59,6 +66,13 @@ export function StatusList({
           onDelete={() => onDelete(status.id)}
         />
       ))}
+      {hasMore ? (
+        isLoadingMore ? (
+          <Spinner marginTop="$2" />
+        ) : (
+          <AppButton label="Cargar más" variant="outlined" marginTop="$2" onPress={onLoadMore} />
+        )
+      ) : null}
     </YStack>
   );
 }

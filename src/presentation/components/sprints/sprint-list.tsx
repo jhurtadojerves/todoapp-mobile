@@ -1,7 +1,8 @@
-import { Paragraph, YStack } from 'tamagui';
+import { Paragraph, Spinner, YStack } from 'tamagui';
 
 import { Sprint } from '@/domain/models/sprint';
 import { SprintRow } from '@/presentation/components/sprints/sprint-row';
+import { AppButton } from '@/presentation/components/ui';
 
 type Props = {
   sprints: Sprint[];
@@ -20,6 +21,9 @@ type Props = {
   onSaveEdit: () => void;
   deletingId: number | null;
   onDelete: (id: number) => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 };
 
 export function SprintList({
@@ -39,6 +43,9 @@ export function SprintList({
   onSaveEdit,
   deletingId,
   onDelete,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
 }: Props) {
   if (sprints.length === 0) {
     return (
@@ -71,6 +78,13 @@ export function SprintList({
           onDelete={() => onDelete(sprint.id)}
         />
       ))}
+      {hasMore ? (
+        isLoadingMore ? (
+          <Spinner marginTop="$2" />
+        ) : (
+          <AppButton label="Cargar más" variant="outlined" marginTop="$2" onPress={onLoadMore} />
+        )
+      ) : null}
     </YStack>
   );
 }

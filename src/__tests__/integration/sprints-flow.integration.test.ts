@@ -59,9 +59,9 @@ describe('Board sprints flow (integration)', () => {
       mockResponse(200, { count: 2, next: null, previous: null, results: [sprint1, sprint2] })
     );
 
-    const result = await getSprintsUseCase.execute('valid-token', 1);
+    const result = await getSprintsUseCase.execute('valid-token', 1, 1);
 
-    expect(result).toEqual([sprint1, sprint2]);
+    expect(result.results).toEqual([sprint1, sprint2]);
   });
 
   it('should create a sprint without dates and return it', async () => {

@@ -8,7 +8,10 @@ const DEFAULT_COLOR = '#64748b';
 export function useBoardStatusesViewModel(boardId: number) {
   const { token } = useAuth();
   const [statuses, setStatuses] = useState<BoardStatus[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [newName, setNewName] = useState('');
@@ -23,28 +26,47 @@ export function useBoardStatusesViewModel(boardId: number) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const loadStatuses = useCallback(() => {
-    if (!token) return;
+  const loadPage = useCallback(
+    (pageNumber: number, append: boolean) => {
+      if (!token) return;
 
-    setIsLoading(true);
-    setError(null);
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
 
-    return dependencies.getStatusesUseCase
-      .execute(token, boardId)
-      .then((payload) => {
-        setStatuses(payload);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'No se pudieron cargar los estados.');
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [token, boardId]);
+      return dependencies.getStatusesUseCase
+        .execute(token, boardId, pageNumber)
+        .then((result) => {
+          setStatuses((prev) => (append ? [...prev, ...result.results] : result.results));
+          setHasMore(Boolean(result.next));
+          setPage(pageNumber);
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : 'No se pudieron cargar los estados.');
+        })
+        .finally(() => {
+          if (append) {
+            setIsLoadingMore(false);
+          } else {
+            setIsLoading(false);
+          }
+        });
+    },
+    [token, boardId]
+  );
 
   useEffect(() => {
-    loadStatuses();
-  }, [loadStatuses]);
+    loadPage(1, false);
+  }, [loadPage]);
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !isLoadingMore) {
+      loadPage(page + 1, true);
+    }
+  }, [hasMore, isLoadingMore, loadPage, page]);
 
   const createStatus = async (): Promise<void> => {
     setCreateError(null);
@@ -67,7 +89,7 @@ export function useBoardStatusesViewModel(boardId: number) {
       };
       await dependencies.createStatusUseCase.execute(token, boardId, input);
       setNewName('');
-      await loadStatuses();
+      await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo crear el estado.';
       setCreateError(message);
@@ -112,7 +134,7 @@ export function useBoardStatusesViewModel(boardId: number) {
       };
       await dependencies.updateStatusUseCase.execute(token, boardId, editingId, input);
       cancelEdit();
-      await loadStatuses();
+      await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo actualizar el estado.';
       setEditError(message);
@@ -131,7 +153,7 @@ export function useBoardStatusesViewModel(boardId: number) {
     setDeleteError(null);
     try {
       await dependencies.deleteStatusUseCase.execute(token, boardId, id);
-      await loadStatuses();
+      await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo eliminar el estado.';
       setDeleteError(message);
@@ -144,6 +166,9 @@ export function useBoardStatusesViewModel(boardId: number) {
   return {
     statuses,
     isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
     error,
     newName,
     setNewName,
@@ -161,5 +186,6 @@ export function useBoardStatusesViewModel(boardId: number) {
     deletingId,
     deleteError,
     deleteStatus,
+    reload: () => loadPage(1, false),
   };
 }

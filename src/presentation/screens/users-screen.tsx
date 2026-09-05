@@ -2,10 +2,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Paragraph, Spinner, YStack } from 'tamagui';
 
 import { UserList } from '@/presentation/components/users/user-list';
+import { AppButton } from '@/presentation/components/ui';
 import { useUsersViewModel } from '@/presentation/viewmodels/use-users-viewmodel';
 
 export function UsersScreen() {
-  const { users, isLoading, error } = useUsersViewModel();
+  const { users, isLoading, isLoadingMore, hasMore, loadMore, error, reload } = useUsersViewModel();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top', 'left', 'right']}>
@@ -24,9 +25,19 @@ export function UsersScreen() {
             <Spinner />
           </YStack>
         ) : error ? (
-          <Paragraph color="$danger">{error}</Paragraph>
+          <YStack flex={1} justifyContent="center" alignItems="center" gap="$3">
+            <Paragraph color="$danger" textAlign="center">
+              {error}
+            </Paragraph>
+            <AppButton label="Reintentar" variant="outlined" width={160} onPress={reload} />
+          </YStack>
         ) : (
-          <UserList users={users} />
+          <UserList
+            users={users}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={loadMore}
+          />
         )}
       </YStack>
     </SafeAreaView>

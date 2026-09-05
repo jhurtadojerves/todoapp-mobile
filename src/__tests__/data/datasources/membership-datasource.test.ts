@@ -32,7 +32,7 @@ describe('MembershipDataSource', () => {
   // ── fetchMembers ───────────────────────────────────────────────────────────
 
   describe('fetchMembers', () => {
-    it('should return the results array from a paginated response', async () => {
+    it('should return the full paginated response', async () => {
       const paginated: PaginatedResponse<BoardMembership> = {
         count: 1,
         next: null,
@@ -41,18 +41,18 @@ describe('MembershipDataSource', () => {
       };
       mockFetch.mockResolvedValue(mockResponse(200, paginated));
 
-      const result = await dataSource.fetchMembers('valid-token', 1);
+      const result = await dataSource.fetchMembers('valid-token', 1, 1);
 
-      expect(result).toEqual([membership]);
+      expect(result).toEqual(paginated);
     });
 
-    it('should request the members endpoint for the given board', async () => {
+    it('should request the members endpoint with the page query param', async () => {
       mockFetch.mockResolvedValue(mockResponse(200, { count: 0, next: null, previous: null, results: [] }));
 
-      await dataSource.fetchMembers('valid-token', 1);
+      await dataSource.fetchMembers('valid-token', 1, 2);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/1/members/'),
+        expect.stringContaining('/boards/1/members/?page=2'),
         expect.objectContaining({
           headers: { Authorization: 'Bearer valid-token' },
         })
@@ -62,7 +62,7 @@ describe('MembershipDataSource', () => {
     it('should throw with the server detail message on error', async () => {
       mockFetch.mockResolvedValue(mockResponse(403, { detail: 'You do not have permission to perform this action.' }));
 
-      await expect(dataSource.fetchMembers('valid-token', 1)).rejects.toThrow(
+      await expect(dataSource.fetchMembers('valid-token', 1, 1)).rejects.toThrow(
         'You do not have permission to perform this action.'
       );
     });
@@ -70,7 +70,7 @@ describe('MembershipDataSource', () => {
     it('should throw a default message when no detail is provided', async () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
-      await expect(dataSource.fetchMembers('valid-token', 1)).rejects.toThrow(
+      await expect(dataSource.fetchMembers('valid-token', 1, 1)).rejects.toThrow(
         'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });

@@ -9,5 +9,7 @@ export interface User {
   first_name?: string;
   last_name?: string;
   date_joined?: string;
-  profile: UserProfile;
+  // The real API can return null here even though the schema marks it required
+  // (a user without a profile row) — always guard with optional chaining.
+  profile: UserProfile | null;
 }

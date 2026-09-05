@@ -6,7 +6,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 export function useBoardMembersViewModel(boardId: number) {
   const { token, userId } = useAuth();
   const [members, setMembers] = useState<BoardMembership[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [isInviting, setIsInviting] = useState(false);
@@ -14,28 +17,47 @@ export function useBoardMembersViewModel(boardId: number) {
   const [removingId, setRemovingId] = useState<number | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
 
-  const loadMembers = useCallback(() => {
-    if (!token) return;
+  const loadPage = useCallback(
+    (pageNumber: number, append: boolean) => {
+      if (!token) return;
 
-    setIsLoading(true);
-    setError(null);
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
 
-    return dependencies.getMembersUseCase
-      .execute(token, boardId)
-      .then((payload) => {
-        setMembers(payload);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'No se pudieron cargar los miembros.');
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [token, boardId]);
+      return dependencies.getMembersUseCase
+        .execute(token, boardId, pageNumber)
+        .then((result) => {
+          setMembers((prev) => (append ? [...prev, ...result.results] : result.results));
+          setHasMore(Boolean(result.next));
+          setPage(pageNumber);
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : 'No se pudieron cargar los miembros.');
+        })
+        .finally(() => {
+          if (append) {
+            setIsLoadingMore(false);
+          } else {
+            setIsLoading(false);
+          }
+        });
+    },
+    [token, boardId]
+  );
 
   useEffect(() => {
-    loadMembers();
-  }, [loadMembers]);
+    loadPage(1, false);
+  }, [loadPage]);
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !isLoadingMore) {
+      loadPage(page + 1, true);
+    }
+  }, [hasMore, isLoadingMore, loadPage, page]);
 
   const currentMembership = useMemo(
     () => members.find((member) => member.user.id === userId) ?? null,
@@ -59,7 +81,7 @@ export function useBoardMembersViewModel(boardId: number) {
     try {
       await dependencies.addMemberUseCase.execute(token, boardId, { email: inviteEmail.trim() });
       setInviteEmail('');
-      await loadMembers();
+      await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo agregar al miembro.';
       setInviteError(message);
@@ -78,7 +100,7 @@ export function useBoardMembersViewModel(boardId: number) {
     setRemoveError(null);
     try {
       await dependencies.removeMemberUseCase.execute(token, boardId, membershipId);
-      await loadMembers();
+      await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo quitar al miembro.';
       setRemoveError(message);
@@ -91,6 +113,9 @@ export function useBoardMembersViewModel(boardId: number) {
   return {
     members,
     isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
     error,
     isOwner,
     inviteEmail,
@@ -101,6 +126,6 @@ export function useBoardMembersViewModel(boardId: number) {
     removingId,
     removeError,
     removeMember,
-    reload: loadMembers,
+    reload: () => loadPage(1, false),
   };
 }

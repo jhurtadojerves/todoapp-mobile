@@ -1,6 +1,7 @@
 import { MembershipRepositoryImpl } from '@/data/repositories/membership-repository-impl';
 import { MembershipDataSource } from '@/data/datasources/membership-datasource';
 import { BoardMembership, BoardMembershipInput } from '@/domain/models/membership';
+import { PaginatedResponse } from '@/domain/models/pagination';
 
 const mockDataSource: jest.Mocked<MembershipDataSource> = {
   fetchMembers: jest.fn(),
@@ -25,12 +26,13 @@ describe('MembershipRepositoryImpl', () => {
   });
 
   it('should delegate fetchMembers to the data source', async () => {
-    mockDataSource.fetchMembers.mockResolvedValue([membership]);
+    const page: PaginatedResponse<BoardMembership> = { count: 1, next: null, previous: null, results: [membership] };
+    mockDataSource.fetchMembers.mockResolvedValue(page);
 
-    const result = await repository.fetchMembers('valid-token', 1);
+    const result = await repository.fetchMembers('valid-token', 1, 1);
 
-    expect(mockDataSource.fetchMembers).toHaveBeenCalledWith('valid-token', 1);
-    expect(result).toEqual([membership]);
+    expect(mockDataSource.fetchMembers).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(result).toEqual(page);
   });
 
   it('should delegate addMember to the data source', async () => {
@@ -54,6 +56,6 @@ describe('MembershipRepositoryImpl', () => {
   it('should propagate errors from the data source', async () => {
     mockDataSource.fetchMembers.mockRejectedValue(new Error('Network error'));
 
-    await expect(repository.fetchMembers('some-token', 1)).rejects.toThrow('Network error');
+    await expect(repository.fetchMembers('some-token', 1, 1)).rejects.toThrow('Network error');
   });
 });

@@ -1,6 +1,7 @@
 import { BoardRepositoryImpl } from '@/data/repositories/board-repository-impl';
 import { BoardDataSource } from '@/data/datasources/board-datasource';
 import { Board, BoardInput } from '@/domain/models/board';
+import { PaginatedResponse } from '@/domain/models/pagination';
 
 const mockDataSource: jest.Mocked<BoardDataSource> = {
   fetchBoards: jest.fn(),
@@ -28,12 +29,13 @@ describe('BoardRepositoryImpl', () => {
   });
 
   it('should delegate fetchBoards to the data source', async () => {
-    mockDataSource.fetchBoards.mockResolvedValue([board]);
+    const page: PaginatedResponse<Board> = { count: 1, next: null, previous: null, results: [board] };
+    mockDataSource.fetchBoards.mockResolvedValue(page);
 
-    const result = await repository.fetchBoards('valid-token');
+    const result = await repository.fetchBoards('valid-token', 1);
 
-    expect(mockDataSource.fetchBoards).toHaveBeenCalledWith('valid-token');
-    expect(result).toEqual([board]);
+    expect(mockDataSource.fetchBoards).toHaveBeenCalledWith('valid-token', 1);
+    expect(result).toEqual(page);
   });
 
   it('should delegate fetchBoard to the data source', async () => {
@@ -76,6 +78,6 @@ describe('BoardRepositoryImpl', () => {
   it('should propagate errors from the data source', async () => {
     mockDataSource.fetchBoards.mockRejectedValue(new Error('Network error'));
 
-    await expect(repository.fetchBoards('some-token')).rejects.toThrow('Network error');
+    await expect(repository.fetchBoards('some-token', 1)).rejects.toThrow('Network error');
   });
 });

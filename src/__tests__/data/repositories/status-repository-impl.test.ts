@@ -1,6 +1,7 @@
 import { StatusRepositoryImpl } from '@/data/repositories/status-repository-impl';
 import { StatusDataSource } from '@/data/datasources/status-datasource';
 import { BoardStatus, BoardStatusInput } from '@/domain/models/status';
+import { PaginatedResponse } from '@/domain/models/pagination';
 
 const mockDataSource: jest.Mocked<StatusDataSource> = {
   fetchStatuses: jest.fn(),
@@ -20,12 +21,13 @@ describe('StatusRepositoryImpl', () => {
   });
 
   it('should delegate fetchStatuses to the data source', async () => {
-    mockDataSource.fetchStatuses.mockResolvedValue([boardStatus]);
+    const page: PaginatedResponse<BoardStatus> = { count: 1, next: null, previous: null, results: [boardStatus] };
+    mockDataSource.fetchStatuses.mockResolvedValue(page);
 
-    const result = await repository.fetchStatuses('valid-token', 1);
+    const result = await repository.fetchStatuses('valid-token', 1, 1);
 
-    expect(mockDataSource.fetchStatuses).toHaveBeenCalledWith('valid-token', 1);
-    expect(result).toEqual([boardStatus]);
+    expect(mockDataSource.fetchStatuses).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(result).toEqual(page);
   });
 
   it('should delegate createStatus to the data source', async () => {
@@ -59,6 +61,6 @@ describe('StatusRepositoryImpl', () => {
   it('should propagate errors from the data source', async () => {
     mockDataSource.fetchStatuses.mockRejectedValue(new Error('Network error'));
 
-    await expect(repository.fetchStatuses('some-token', 1)).rejects.toThrow('Network error');
+    await expect(repository.fetchStatuses('some-token', 1, 1)).rejects.toThrow('Network error');
   });
 });

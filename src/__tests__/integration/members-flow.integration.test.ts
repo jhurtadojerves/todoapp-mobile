@@ -55,9 +55,9 @@ describe('Board members flow (integration)', () => {
       mockResponse(200, { count: 2, next: null, previous: null, results: [owner, member] })
     );
 
-    const result = await getMembersUseCase.execute('valid-token', 1);
+    const result = await getMembersUseCase.execute('valid-token', 1, 1);
 
-    expect(result).toEqual([owner, member]);
+    expect(result.results).toEqual([owner, member]);
   });
 
   it('should invite a member by email and return the created membership', async () => {

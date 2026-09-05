@@ -33,7 +33,7 @@ describe('SprintDataSource', () => {
   // ── fetchSprints ───────────────────────────────────────────────────────────
 
   describe('fetchSprints', () => {
-    it('should return the results array from a paginated response', async () => {
+    it('should return the full paginated response', async () => {
       const paginated: PaginatedResponse<Sprint> = {
         count: 1,
         next: null,
@@ -42,18 +42,18 @@ describe('SprintDataSource', () => {
       };
       mockFetch.mockResolvedValue(mockResponse(200, paginated));
 
-      const result = await dataSource.fetchSprints('valid-token', 1);
+      const result = await dataSource.fetchSprints('valid-token', 1, 1);
 
-      expect(result).toEqual([sprint]);
+      expect(result).toEqual(paginated);
     });
 
-    it('should request the sprints endpoint for the given board', async () => {
+    it('should request the sprints endpoint with the page query param', async () => {
       mockFetch.mockResolvedValue(mockResponse(200, { count: 0, next: null, previous: null, results: [] }));
 
-      await dataSource.fetchSprints('valid-token', 1);
+      await dataSource.fetchSprints('valid-token', 1, 2);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/1/sprints/'),
+        expect.stringContaining('/boards/1/sprints/?page=2'),
         expect.objectContaining({
           headers: { Authorization: 'Bearer valid-token' },
         })
@@ -63,7 +63,7 @@ describe('SprintDataSource', () => {
     it('should throw a default message when no detail is provided', async () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
-      await expect(dataSource.fetchSprints('valid-token', 1)).rejects.toThrow(
+      await expect(dataSource.fetchSprints('valid-token', 1, 1)).rejects.toThrow(
         'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });

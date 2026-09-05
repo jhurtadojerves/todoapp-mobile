@@ -1,12 +1,13 @@
 import { MembershipDataSource } from '@/data/datasources/membership-datasource';
 import { BoardMembership, BoardMembershipInput } from '@/domain/models/membership';
+import { PaginatedResponse } from '@/domain/models/pagination';
 import { MembershipRepository } from '@/domain/repositories/membership-repository';
 
 export class MembershipRepositoryImpl implements MembershipRepository {
   constructor(private readonly dataSource: MembershipDataSource) {}
 
-  fetchMembers(token: string, boardId: number): Promise<BoardMembership[]> {
-    return this.dataSource.fetchMembers(token, boardId);
+  fetchMembers(token: string, boardId: number, page: number): Promise<PaginatedResponse<BoardMembership>> {
+    return this.dataSource.fetchMembers(token, boardId, page);
   }
 
   addMember(token: string, boardId: number, input: BoardMembershipInput): Promise<BoardMembership> {

@@ -1,6 +1,7 @@
 import { SprintRepositoryImpl } from '@/data/repositories/sprint-repository-impl';
 import { SprintDataSource } from '@/data/datasources/sprint-datasource';
 import { Sprint, SprintInput } from '@/domain/models/sprint';
+import { PaginatedResponse } from '@/domain/models/pagination';
 
 const mockDataSource: jest.Mocked<SprintDataSource> = {
   fetchSprints: jest.fn(),
@@ -27,12 +28,13 @@ describe('SprintRepositoryImpl', () => {
   });
 
   it('should delegate fetchSprints to the data source', async () => {
-    mockDataSource.fetchSprints.mockResolvedValue([sprint]);
+    const page: PaginatedResponse<Sprint> = { count: 1, next: null, previous: null, results: [sprint] };
+    mockDataSource.fetchSprints.mockResolvedValue(page);
 
-    const result = await repository.fetchSprints('valid-token', 1);
+    const result = await repository.fetchSprints('valid-token', 1, 1);
 
-    expect(mockDataSource.fetchSprints).toHaveBeenCalledWith('valid-token', 1);
-    expect(result).toEqual([sprint]);
+    expect(mockDataSource.fetchSprints).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(result).toEqual(page);
   });
 
   it('should delegate createSprint to the data source', async () => {
@@ -66,6 +68,6 @@ describe('SprintRepositoryImpl', () => {
   it('should propagate errors from the data source', async () => {
     mockDataSource.fetchSprints.mockRejectedValue(new Error('Network error'));
 
-    await expect(repository.fetchSprints('some-token', 1)).rejects.toThrow('Network error');
+    await expect(repository.fetchSprints('some-token', 1, 1)).rejects.toThrow('Network error');
   });
 });

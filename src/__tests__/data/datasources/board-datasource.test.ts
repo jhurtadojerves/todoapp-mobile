@@ -33,7 +33,7 @@ describe('BoardDataSource', () => {
   // ── fetchBoards ────────────────────────────────────────────────────────────
 
   describe('fetchBoards', () => {
-    it('should return the results array from a paginated response', async () => {
+    it('should return the full paginated response', async () => {
       const paginated: PaginatedResponse<Board> = {
         count: 1,
         next: null,
@@ -42,27 +42,19 @@ describe('BoardDataSource', () => {
       };
       mockFetch.mockResolvedValue(mockResponse(200, paginated));
 
-      const result = await dataSource.fetchBoards('valid-token');
+      const result = await dataSource.fetchBoards('valid-token', 1);
 
-      expect(result).toEqual([board]);
+      expect(result).toEqual(paginated);
     });
 
-    it('should return the array directly when the response is not paginated', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, [board]));
-
-      const result = await dataSource.fetchBoards('valid-token');
-
-      expect(result).toEqual([board]);
-    });
-
-    it('should send the Bearer token in the Authorization header', async () => {
+    it('should request the boards endpoint with the page query param', async () => {
       const token = 'my-token';
       mockFetch.mockResolvedValue(mockResponse(200, { count: 0, next: null, previous: null, results: [] }));
 
-      await dataSource.fetchBoards(token);
+      await dataSource.fetchBoards(token, 2);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/'),
+        expect.stringContaining('/boards/?page=2'),
         expect.objectContaining({
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -72,7 +64,7 @@ describe('BoardDataSource', () => {
     it('should throw with the server detail message on error', async () => {
       mockFetch.mockResolvedValue(mockResponse(401, { detail: 'Authentication credentials were not provided.' }));
 
-      await expect(dataSource.fetchBoards('bad-token')).rejects.toThrow(
+      await expect(dataSource.fetchBoards('bad-token', 1)).rejects.toThrow(
         'Authentication credentials were not provided.'
       );
     });
@@ -80,7 +72,7 @@ describe('BoardDataSource', () => {
     it('should throw a default message when no detail is provided', async () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
-      await expect(dataSource.fetchBoards('some-token')).rejects.toThrow(
+      await expect(dataSource.fetchBoards('some-token', 1)).rejects.toThrow(
         'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });

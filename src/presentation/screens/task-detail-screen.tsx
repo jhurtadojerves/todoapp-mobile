@@ -45,6 +45,7 @@ export function TaskDetailScreen({ boardId, taskId }: Props) {
     deletingId: deletingCommentId,
     deleteError: deleteCommentError,
     deleteComment,
+    reload: reloadComments,
   } = useTaskCommentsViewModel(taskId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -182,7 +183,10 @@ export function TaskDetailScreen({ boardId, taskId }: Props) {
                 {isLoadingComments ? (
                   <Spinner />
                 ) : commentsError ? (
-                  <Paragraph color="$danger">{commentsError}</Paragraph>
+                  <YStack gap="$3" alignItems="flex-start">
+                    <Paragraph color="$danger">{commentsError}</Paragraph>
+                    <AppButton label="Reintentar" variant="outlined" width={160} onPress={reloadComments} />
+                  </YStack>
                 ) : (
                   <CommentList
                     comments={comments}

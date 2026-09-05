@@ -32,26 +32,30 @@ const apiUsers: User[] = [
 describe('Get users flow (integration)', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('should return the full list of users with a valid token', async () => {
+  it('should return the first page of users with a valid token', async () => {
     const useCase = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(200, apiUsers));
+    mockFetch.mockResolvedValue(
+      mockResponse(200, { count: 2, next: null, previous: null, results: apiUsers })
+    );
 
-    const result = await useCase.execute('valid-token');
+    const result = await useCase.execute('valid-token', 1);
 
-    expect(result).toHaveLength(2);
-    expect(result[0]).toMatchObject({ id: 1, username: 'john', email: 'john@example.com' });
-    expect(result[1]).toMatchObject({ id: 2, username: 'jane' });
+    expect(result.results).toHaveLength(2);
+    expect(result.results[0]).toMatchObject({ id: 1, username: 'john', email: 'john@example.com' });
+    expect(result.results[1]).toMatchObject({ id: 2, username: 'jane' });
   });
 
-  it('should send the Bearer token in the Authorization header', async () => {
+  it('should send the Bearer token and page query param', async () => {
     const useCase = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(200, apiUsers));
+    mockFetch.mockResolvedValue(
+      mockResponse(200, { count: 2, next: null, previous: null, results: apiUsers })
+    );
     const token = 'my-jwt-token';
 
-    await useCase.execute(token);
+    await useCase.execute(token, 1);
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/users/'),
+      expect.stringContaining('/users/?page=1'),
       expect.objectContaining({
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -64,6 +68,6 @@ describe('Get users flow (integration)', () => {
       mockResponse(401, { detail: 'Token is expired.' })
     );
 
-    await expect(useCase.execute('expired-token')).rejects.toThrow('Token is expired.');
+    await expect(useCase.execute('expired-token', 1)).rejects.toThrow('Token is expired.');
   });
 });

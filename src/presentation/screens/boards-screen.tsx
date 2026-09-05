@@ -9,7 +9,7 @@ import { useBoardsViewModel } from '@/presentation/viewmodels/use-boards-viewmod
 
 export function BoardsScreen() {
   const router = useRouter();
-  const { boards, isLoading, error, reload } = useBoardsViewModel();
+  const { boards, isLoading, isLoadingMore, hasMore, error, loadMore, reload } = useBoardsViewModel();
 
   const handlePressBoard = (board: Board) => {
     router.push(`/board/${board.id}` as any);
@@ -47,7 +47,13 @@ export function BoardsScreen() {
             <AppButton label="Reintentar" variant="outlined" width={160} onPress={reload} />
           </YStack>
         ) : (
-          <BoardList boards={boards} onPressBoard={handlePressBoard} />
+          <BoardList
+            boards={boards}
+            onPressBoard={handlePressBoard}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={loadMore}
+          />
         )}
       </YStack>
     </SafeAreaView>

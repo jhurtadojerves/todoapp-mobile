@@ -26,7 +26,7 @@ describe('StatusDataSource', () => {
   // ── fetchStatuses ──────────────────────────────────────────────────────────
 
   describe('fetchStatuses', () => {
-    it('should return the results array from a paginated response', async () => {
+    it('should return the full paginated response', async () => {
       const paginated: PaginatedResponse<BoardStatus> = {
         count: 1,
         next: null,
@@ -35,18 +35,18 @@ describe('StatusDataSource', () => {
       };
       mockFetch.mockResolvedValue(mockResponse(200, paginated));
 
-      const result = await dataSource.fetchStatuses('valid-token', 1);
+      const result = await dataSource.fetchStatuses('valid-token', 1, 1);
 
-      expect(result).toEqual([boardStatus]);
+      expect(result).toEqual(paginated);
     });
 
-    it('should request the statuses endpoint for the given board', async () => {
+    it('should request the statuses endpoint with the page query param', async () => {
       mockFetch.mockResolvedValue(mockResponse(200, { count: 0, next: null, previous: null, results: [] }));
 
-      await dataSource.fetchStatuses('valid-token', 1);
+      await dataSource.fetchStatuses('valid-token', 1, 2);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/1/statuses/'),
+        expect.stringContaining('/boards/1/statuses/?page=2'),
         expect.objectContaining({
           headers: { Authorization: 'Bearer valid-token' },
         })
@@ -56,7 +56,7 @@ describe('StatusDataSource', () => {
     it('should throw a default message when no detail is provided', async () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
-      await expect(dataSource.fetchStatuses('valid-token', 1)).rejects.toThrow(
+      await expect(dataSource.fetchStatuses('valid-token', 1, 1)).rejects.toThrow(
         'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });

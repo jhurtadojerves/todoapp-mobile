@@ -52,9 +52,9 @@ describe('Boards CRUD flow (integration)', () => {
       mockResponse(200, { count: 1, next: null, previous: null, results: [board] })
     );
 
-    const result = await getBoardsUseCase.execute('valid-token');
+    const result = await getBoardsUseCase.execute('valid-token', 1);
 
-    expect(result).toEqual([board]);
+    expect(result.results).toEqual([board]);
   });
 
   it('should create a board and return it', async () => {

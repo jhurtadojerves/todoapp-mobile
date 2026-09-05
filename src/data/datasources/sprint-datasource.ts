@@ -1,16 +1,16 @@
 import { Sprint, SprintInput } from '@/domain/models/sprint';
 import { PaginatedResponse } from '@/domain/models/pagination';
 import { apiFetch } from '@/shared/api/http-client';
+import { buildQueryString } from '@/shared/api/query-string';
 
 const sprintsPath = (boardId: number) => `/api/v1/boards/${boardId}/sprints/`;
 const sprintDetailPath = (boardId: number, id: number) => `/api/v1/boards/${boardId}/sprints/${id}/`;
 
 export class SprintDataSource {
-  async fetchSprints(token: string, boardId: number): Promise<Sprint[]> {
-    const data = await apiFetch<PaginatedResponse<Sprint> | Sprint[]>(sprintsPath(boardId), {
+  fetchSprints(token: string, boardId: number, page: number): Promise<PaginatedResponse<Sprint>> {
+    return apiFetch<PaginatedResponse<Sprint>>(`${sprintsPath(boardId)}${buildQueryString({ page })}`, {
       token,
     });
-    return Array.isArray(data) ? data : data.results;
   }
 
   createSprint(token: string, boardId: number, input: SprintInput): Promise<Sprint> {

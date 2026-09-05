@@ -1,47 +1,63 @@
 import { User } from '@/domain/models/user';
 import { useAuth } from '@/presentation/contexts/auth-context';
 import { dependencies } from '@/shared/di/dependencies';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useUsersViewModel() {
   const { token, logout } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadPage = useCallback(
+    (pageNumber: number, append: boolean) => {
+      if (!token) {
+        setUsers([]);
+        return;
+      }
 
-    if (!token) {
-      setUsers([]);
-      return;
-    }
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
 
-    setIsLoading(true);
-    setError(null);
-
-    dependencies
-      .getUsersUseCase.execute(token)
-      .then((payload) => {
-        if (isMounted) {
-          setUsers(payload);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
+      return dependencies.getUsersUseCase
+        .execute(token, pageNumber)
+        .then((result) => {
+          setUsers((prev) => (append ? [...prev, ...result.results] : result.results));
+          setHasMore(Boolean(result.next));
+          setPage(pageNumber);
+        })
+        .catch((err) => {
           setError(err instanceof Error ? err.message : 'No se pudieron cargar los usuarios.');
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      });
+        })
+        .finally(() => {
+          if (append) {
+            setIsLoadingMore(false);
+          } else {
+            setIsLoading(false);
+          }
+        });
+    },
+    [token]
+  );
 
-    return () => {
-      isMounted = false;
-    };
-  }, [token]);
+  useEffect(() => {
+    loadPage(1, false);
+  }, [loadPage]);
 
-  return { users, isLoading, error, logout };
+  const loadMore = useCallback(() => {
+    if (hasMore && !isLoadingMore) {
+      loadPage(page + 1, true);
+    }
+  }, [hasMore, isLoadingMore, loadPage, page]);
+
+  const reload = useCallback(() => loadPage(1, false), [loadPage]);
+
+  return { users, isLoading, isLoadingMore, hasMore, loadMore, error, reload, logout };
 }

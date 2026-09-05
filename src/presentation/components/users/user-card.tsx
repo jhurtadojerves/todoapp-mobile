@@ -39,7 +39,7 @@ export function UserCard({ user }: Props) {
         </YStack>
       </XStack>
       <Paragraph color="$text" fontSize={14}>
-        {user.profile.bio || 'Sin bio'}
+        {user.profile?.bio || 'Sin bio'}
       </Paragraph>
     </YStack>
   );
