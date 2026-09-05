@@ -5,10 +5,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email();
+const usernamePattern = /^[\w.@+-]+$/;
 
 export function useRegisterViewModel() {
   const { register, isAuthenticating } = useAuth();
   const [credentials, setCredentials] = useState<RegisterCredentials>({
+    username: '',
     email: '',
     password: '',
     password2: '',
@@ -16,11 +18,26 @@ export function useRegisterViewModel() {
     last_name: '',
   });
   const [error, setError] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordMatchError, setPasswordMatchError] = useState<string | null>(null);
   const [passwordValidationErrors, setPasswordValidationErrors] = useState<string[]>([]);
   const [isValidatingPassword, setIsValidatingPassword] = useState(false);
+
+  // Validate username format
+  const validateUsername = useCallback((username: string) => {
+    if (!username) {
+      setUsernameError(null);
+      return;
+    }
+
+    if (username.length > 150 || !usernamePattern.test(username)) {
+      setUsernameError('Solo letras, números y @/./+/-/_ (máximo 150 caracteres)');
+    } else {
+      setUsernameError(null);
+    }
+  }, []);
 
   // Validate email format
   const validateEmail = useCallback((email: string) => {
@@ -90,6 +107,10 @@ export function useRegisterViewModel() {
     setCredentials((prev) => {
       const updated = { ...prev, [field]: value };
 
+      if (field === 'username') {
+        validateUsername(value);
+      }
+
       if (field === 'email') {
         validateEmail(value);
       }
@@ -105,9 +126,20 @@ export function useRegisterViewModel() {
   const submit = async () => {
     setError(null);
 
-    if (!credentials.email || !credentials.password || !credentials.first_name || !credentials.last_name) {
+    if (
+      !credentials.username ||
+      !credentials.email ||
+      !credentials.password ||
+      !credentials.first_name ||
+      !credentials.last_name
+    ) {
       setError('Todos los campos son obligatorios');
       throw new Error('Todos los campos son obligatorios');
+    }
+
+    if (usernameError) {
+      setError(usernameError);
+      throw new Error(usernameError);
     }
 
     if (emailError) {
@@ -136,11 +168,13 @@ export function useRegisterViewModel() {
   };
 
   const canSubmit =
+    credentials.username &&
     credentials.email &&
     credentials.password &&
     credentials.password2 &&
     credentials.first_name &&
     credentials.last_name &&
+    !usernameError &&
     !emailError &&
     !passwordError &&
     !passwordMatchError &&
@@ -151,6 +185,7 @@ export function useRegisterViewModel() {
     setField,
     submit,
     error,
+    usernameError,
     emailError,
     passwordError,
     passwordMatchError,

@@ -70,9 +70,10 @@ describe('Auth flow (integration)', () => {
 
       // Step 2: register with valid credentials
       mockFetch.mockResolvedValueOnce(
-        mockResponse(201, { access: 'access-token', refresh: 'refresh-token' })
+        mockResponse(201, { username: 'johndoe', email: 'new@example.com', first_name: 'John', last_name: 'Doe' })
       );
-      const tokens = await registerUseCase.execute({
+      const registeredUser = await registerUseCase.execute({
+        username: 'johndoe',
         email: 'new@example.com',
         password: 'StrongPass1!',
         password2: 'StrongPass1!',
@@ -80,7 +81,12 @@ describe('Auth flow (integration)', () => {
         last_name: 'Doe',
       });
 
-      expect(tokens).toEqual({ access: 'access-token', refresh: 'refresh-token' });
+      expect(registeredUser).toEqual({
+        username: 'johndoe',
+        email: 'new@example.com',
+        first_name: 'John',
+        last_name: 'Doe',
+      });
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 

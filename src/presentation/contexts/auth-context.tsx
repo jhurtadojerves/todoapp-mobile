@@ -6,6 +6,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 interface AuthContextValue {
   token: string | null;
   refreshToken: string | null;
+  userId: number | null;
   isAuthenticated: boolean;
   isAuthenticating: boolean;
   login(credentials: UserCredentials): Promise<void>;

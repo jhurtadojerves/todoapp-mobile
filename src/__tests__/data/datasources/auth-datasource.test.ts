@@ -1,6 +1,6 @@
 import { AuthDataSource } from '@/data/datasources/auth-datasource';
 import { UserCredentials, TokenPair } from '@/domain/models/token';
-import { RegisterCredentials } from '@/domain/models/register';
+import { RegisterCredentials, RegisteredUser } from '@/domain/models/register';
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -100,20 +100,55 @@ describe('AuthDataSource', () => {
 
   describe('register', () => {
     const credentials: RegisterCredentials = {
+      username: 'newuser',
       email: 'new@example.com',
       password: 'StrongPass1!',
       password2: 'StrongPass1!',
       first_name: 'John',
       last_name: 'Doe',
     };
-    const tokenPair: TokenPair = { access: 'access-token', refresh: 'refresh-token' };
+    const registeredUser: RegisteredUser = {
+      username: 'newuser',
+      email: 'new@example.com',
+      first_name: 'John',
+      last_name: 'Doe',
+    };
 
-    it('should return a TokenPair on successful registration', async () => {
-      mockFetch.mockResolvedValue(mockResponse(201, tokenPair));
+    it('should return the created user on successful registration', async () => {
+      mockFetch.mockResolvedValue(mockResponse(201, registeredUser));
 
       const result = await dataSource.register(credentials);
 
-      expect(result).toEqual(tokenPair);
+      expect(result).toEqual(registeredUser);
+    });
+
+    it('should not send password2 in the request body', async () => {
+      mockFetch.mockResolvedValue(mockResponse(201, registeredUser));
+
+      await dataSource.register(credentials);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/users/register/'),
+        expect.objectContaining({
+          body: JSON.stringify({
+            username: 'newuser',
+            email: 'new@example.com',
+            password: 'StrongPass1!',
+            first_name: 'John',
+            last_name: 'Doe',
+          }),
+        })
+      );
+    });
+
+    it('should throw with the username field error when present', async () => {
+      mockFetch.mockResolvedValue(
+        mockResponse(400, { username: ['A user with that username already exists.'] })
+      );
+
+      await expect(dataSource.register(credentials)).rejects.toThrow(
+        'A user with that username already exists.'
+      );
     });
 
     it('should throw with detail message on error', async () => {

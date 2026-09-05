@@ -1,26 +1,33 @@
 import { AuthDataSource } from '@/data/datasources/auth-datasource';
 import { BoardDataSource } from '@/data/datasources/board-datasource';
+import { MembershipDataSource } from '@/data/datasources/membership-datasource';
 import { UserDataSource } from '@/data/datasources/user-datasource';
 import { AuthRepositoryImpl } from '@/data/repositories/auth-repository-impl';
 import { BoardRepositoryImpl } from '@/data/repositories/board-repository-impl';
+import { MembershipRepositoryImpl } from '@/data/repositories/membership-repository-impl';
 import { UserRepositoryImpl } from '@/data/repositories/user-repository-impl';
+import { AddMemberUseCase } from '@/domain/usecases/add-member';
 import { CreateBoardUseCase } from '@/domain/usecases/create-board';
 import { DeleteBoardUseCase } from '@/domain/usecases/delete-board';
 import { GetBoardUseCase } from '@/domain/usecases/get-board';
 import { GetBoardsUseCase } from '@/domain/usecases/get-boards';
+import { GetMembersUseCase } from '@/domain/usecases/get-members';
 import { GetUsersUseCase } from '@/domain/usecases/get-users';
 import { LoginUseCase } from '@/domain/usecases/login';
 import { RefreshTokenUseCase } from '@/domain/usecases/refresh-token';
 import { RegisterUseCase } from '@/domain/usecases/register';
+import { RemoveMemberUseCase } from '@/domain/usecases/remove-member';
 import { UpdateBoardUseCase } from '@/domain/usecases/update-board';
 import { ValidatePasswordUseCase } from '@/domain/usecases/validate-password';
 
 const authDataSource = new AuthDataSource();
 const userDataSource = new UserDataSource();
 const boardDataSource = new BoardDataSource();
+const membershipDataSource = new MembershipDataSource();
 const authRepository = new AuthRepositoryImpl(authDataSource);
 const userRepository = new UserRepositoryImpl(userDataSource);
 const boardRepository = new BoardRepositoryImpl(boardDataSource);
+const membershipRepository = new MembershipRepositoryImpl(membershipDataSource);
 
 export const dependencies = {
   loginUseCase: new LoginUseCase(authRepository),
@@ -33,4 +40,7 @@ export const dependencies = {
   createBoardUseCase: new CreateBoardUseCase(boardRepository),
   updateBoardUseCase: new UpdateBoardUseCase(boardRepository),
   deleteBoardUseCase: new DeleteBoardUseCase(boardRepository),
+  getMembersUseCase: new GetMembersUseCase(membershipRepository),
+  addMemberUseCase: new AddMemberUseCase(membershipRepository),
+  removeMemberUseCase: new RemoveMemberUseCase(membershipRepository),
 };

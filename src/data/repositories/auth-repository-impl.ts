@@ -1,6 +1,6 @@
 import { AuthDataSource } from '@/data/datasources/auth-datasource';
 import { TokenPair, UserCredentials } from '@/domain/models/token';
-import { PasswordValidationResult, RegisterCredentials } from '@/domain/models/register';
+import { PasswordValidationResult, RegisterCredentials, RegisteredUser } from '@/domain/models/register';
 import { AuthRepository } from '@/domain/repositories/auth-repository';
 
 export class AuthRepositoryImpl implements AuthRepository {
@@ -14,7 +14,7 @@ export class AuthRepositoryImpl implements AuthRepository {
     return this.dataSource.refreshToken(refresh);
   }
 
-  register(credentials: RegisterCredentials): Promise<TokenPair> {
+  register(credentials: RegisterCredentials): Promise<RegisteredUser> {
     return this.dataSource.register(credentials);
   }
 

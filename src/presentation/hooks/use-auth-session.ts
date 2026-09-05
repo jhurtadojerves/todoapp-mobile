@@ -4,11 +4,17 @@ import { UserCredentials } from '@/domain/models/token';
 import { RegisterCredentials } from '@/domain/models/register';
 import { dependencies } from '@/shared/di/dependencies';
 import { storage } from '@/shared/utils/storage';
+import { decodeJwtPayload } from '@/shared/utils/jwt';
 
 export function useAuthSession() {
   const [token, setToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  const userId = useMemo(() => {
+    if (!token) return null;
+    return decodeJwtPayload(token)?.user_id ?? null;
+  }, [token]);
 
   const persistTokens = useCallback(async (access: string, refresh: string) => {
     setToken(access);
@@ -66,7 +72,12 @@ export function useAuthSession() {
     async (credentials: RegisterCredentials) => {
       setIsAuthenticating(true);
       try {
-        const tokens = await dependencies.registerUseCase.execute(credentials);
+        await dependencies.registerUseCase.execute(credentials);
+        // El registro no devuelve tokens, así que iniciamos sesión con las mismas credenciales.
+        const tokens = await dependencies.loginUseCase.execute({
+          email: credentials.email,
+          password: credentials.password,
+        });
         await persistTokens(tokens.access, tokens.refresh);
       } finally {
         setIsAuthenticating(false);
@@ -94,6 +105,7 @@ export function useAuthSession() {
     () => ({
       token,
       refreshToken,
+      userId,
       isAuthenticated: Boolean(token),
       isAuthenticating,
       login,
@@ -101,6 +113,6 @@ export function useAuthSession() {
       logout,
       refreshSession,
     }),
-    [token, refreshToken, isAuthenticating, login, register, logout, refreshSession]
+    [token, refreshToken, userId, isAuthenticating, login, register, logout, refreshSession]
   );
 }

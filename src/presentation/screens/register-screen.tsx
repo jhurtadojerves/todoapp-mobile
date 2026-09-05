@@ -14,6 +14,7 @@ export function RegisterScreen() {
     setField,
     submit,
     error,
+    usernameError,
     emailError,
     passwordError,
     passwordMatchError,
@@ -52,6 +53,21 @@ export function RegisterScreen() {
           gap="$3"
         >
           <AppTitle subtitle="Crea una cuenta para comenzar.">Registro</AppTitle>
+
+          <YStack gap="$2">
+            <AppInput
+              placeholder="Nombre de usuario"
+              autoCapitalize="none"
+              textContentType="username"
+              value={credentials.username}
+              onChangeText={(value) => setField('username', value)}
+            />
+            {usernameError ? (
+              <Paragraph color="$danger" fontSize={13}>
+                {usernameError}
+              </Paragraph>
+            ) : null}
+          </YStack>
 
           <YStack gap="$2">
             <AppInput

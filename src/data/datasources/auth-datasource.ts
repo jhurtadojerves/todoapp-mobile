@@ -1,4 +1,4 @@
-import { PasswordValidationResult, RegisterCredentials } from '@/domain/models/register';
+import { PasswordValidationResult, RegisterCredentials, RegisteredUser } from '@/domain/models/register';
 import { TokenPair, UserCredentials } from '@/domain/models/token';
 import { API_BASE_URL } from '@/shared/config/api';
 
@@ -45,27 +45,30 @@ export class AuthDataSource {
     };
   }
 
-  async register(credentials: RegisterCredentials): Promise<TokenPair> {
+  async register(credentials: RegisterCredentials): Promise<RegisteredUser> {
+    const { username, email, password, first_name, last_name } = credentials;
     const response = await fetch(REGISTER_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
+      body: JSON.stringify({ username, email, password, first_name, last_name }),
     });
 
     if (!response.ok) {
       const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string; email?: string[]; password?: string[] }
+        | { detail?: string; username?: string[]; email?: string[]; password?: string[] }
         | null;
-      
+
       let errorMessage = 'No se pudo completar el registro.';
       if (errorPayload?.detail) {
         errorMessage = errorPayload.detail;
+      } else if (errorPayload?.username) {
+        errorMessage = errorPayload.username[0];
       } else if (errorPayload?.email) {
         errorMessage = errorPayload.email[0];
       } else if (errorPayload?.password) {
         errorMessage = errorPayload.password[0];
       }
-      
+
       throw new Error(errorMessage);
     }
 

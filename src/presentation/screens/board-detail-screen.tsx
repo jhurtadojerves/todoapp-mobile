@@ -1,11 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Paragraph, Spinner, YStack } from 'tamagui';
+import { Paragraph, ScrollView, Spinner, YStack } from 'tamagui';
 
-import { AppButton } from '@/presentation/components/ui';
+import { MemberList } from '@/presentation/components/members/member-list';
+import { AppButton, AppInput } from '@/presentation/components/ui';
 import { useBoardDetailViewModel } from '@/presentation/viewmodels/use-board-detail-viewmodel';
+import { useBoardMembersViewModel } from '@/presentation/viewmodels/use-board-members-viewmodel';
+import { confirmAction } from '@/shared/utils/confirm';
 
 type Props = {
   boardId: number;
@@ -15,29 +17,55 @@ export function BoardDetailScreen({ boardId }: Props) {
   const router = useRouter();
   const { board, isLoading, error, isDeleting, deleteError, deleteBoard } =
     useBoardDetailViewModel(boardId);
+  const {
+    members,
+    isLoading: isLoadingMembers,
+    error: membersError,
+    isOwner,
+    inviteEmail,
+    setInviteEmail,
+    isInviting,
+    inviteError,
+    inviteMember,
+    removingId,
+    removeError,
+    removeMember,
+  } = useBoardMembersViewModel(boardId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  const handleDelete = () => {
-    Alert.alert(
-      'Eliminar tablero',
-      '¿Seguro que querés eliminar este tablero? Esta acción no se puede deshacer.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            setConfirmingDelete(true);
-            try {
-              await deleteBoard();
-              router.replace('/boards' as any);
-            } catch {
-              setConfirmingDelete(false);
-            }
-          },
-        },
-      ]
-    );
+  const handleDelete = async () => {
+    const confirmed = await confirmAction({
+      title: 'Eliminar tablero',
+      message: '¿Seguro que querés eliminar este tablero? Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+    });
+    if (!confirmed) return;
+
+    setConfirmingDelete(true);
+    try {
+      await deleteBoard();
+      router.replace('/boards' as any);
+    } catch {
+      setConfirmingDelete(false);
+    }
+  };
+
+  const handleInvite = async () => {
+    try {
+      await inviteMember();
+    } catch {
+    }
+  };
+
+  const handleRemove = async (membershipId: number) => {
+    const confirmed = await confirmAction({
+      title: 'Quitar miembro',
+      message: '¿Seguro que querés quitar a este miembro del tablero?',
+      confirmLabel: 'Quitar',
+    });
+    if (!confirmed) return;
+
+    removeMember(membershipId).catch(() => {});
   };
 
   if (isLoading) {
@@ -50,38 +78,86 @@ export function BoardDetailScreen({ boardId }: Props) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top', 'left', 'right']}>
-      <YStack flex={1} backgroundColor="$background" padding="$4" gap="$4">
-        {error ? (
-          <Paragraph color="$danger">{error}</Paragraph>
-        ) : board ? (
-          <>
-            <YStack gap="$2">
-              <Paragraph fontSize={24} fontWeight="700" color="$text">
-                {board.name}
-              </Paragraph>
-              <Paragraph color="$muted" fontSize={16}>
-                {board.description || 'Sin descripción'}
-              </Paragraph>
-            </YStack>
+      <ScrollView flex={1} backgroundColor="$background">
+        <YStack padding="$4" gap="$4">
+          {error ? (
+            <Paragraph color="$danger">{error}</Paragraph>
+          ) : board ? (
+            <>
+              <YStack gap="$2">
+                <Paragraph fontSize={24} fontWeight="700" color="$text">
+                  {board.name}
+                </Paragraph>
+                <Paragraph color="$muted" fontSize={16}>
+                  {board.description || 'Sin descripción'}
+                </Paragraph>
+              </YStack>
 
-            {deleteError ? <Paragraph color="$danger">{deleteError}</Paragraph> : null}
+              {deleteError ? <Paragraph color="$danger">{deleteError}</Paragraph> : null}
 
-            <YStack gap="$3" marginTop="$4">
-              <AppButton
-                label="Editar"
-                variant="outlined"
-                onPress={() => router.push(`/board/${board.id}/edit` as any)}
-              />
-              <AppButton
-                label="Eliminar tablero"
-                loading={isDeleting || confirmingDelete}
-                onPress={handleDelete}
-                backgroundColor="$danger"
-              />
-            </YStack>
-          </>
-        ) : null}
-      </YStack>
+              {isOwner ? (
+                <YStack gap="$3">
+                  <AppButton
+                    label="Editar"
+                    variant="outlined"
+                    onPress={() => router.push(`/board/${board.id}/edit` as any)}
+                  />
+                  <AppButton
+                    label="Eliminar tablero"
+                    loading={isDeleting || confirmingDelete}
+                    onPress={handleDelete}
+                    backgroundColor="$danger"
+                  />
+                </YStack>
+              ) : null}
+
+              <YStack gap="$3" borderTopWidth={1} borderColor="$border" paddingTop="$4">
+                <Paragraph fontSize={18} fontWeight="700" color="$text">
+                  Miembros
+                </Paragraph>
+
+                {isOwner ? (
+                  <YStack gap="$2">
+                    <AppInput
+                      placeholder="Correo electrónico"
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      value={inviteEmail}
+                      onChangeText={setInviteEmail}
+                    />
+                    {inviteError ? (
+                      <Paragraph color="$danger" fontSize={13}>
+                        {inviteError}
+                      </Paragraph>
+                    ) : null}
+                    <AppButton
+                      label="Invitar"
+                      loading={isInviting}
+                      disabled={!inviteEmail.trim() || isInviting}
+                      onPress={handleInvite}
+                    />
+                  </YStack>
+                ) : null}
+
+                {removeError ? <Paragraph color="$danger">{removeError}</Paragraph> : null}
+
+                {isLoadingMembers ? (
+                  <Spinner />
+                ) : membersError ? (
+                  <Paragraph color="$danger">{membersError}</Paragraph>
+                ) : (
+                  <MemberList
+                    members={members}
+                    isOwner={isOwner}
+                    removingId={removingId}
+                    onRemove={handleRemove}
+                  />
+                )}
+              </YStack>
+            </>
+          ) : null}
+        </YStack>
+      </ScrollView>
     </SafeAreaView>
   );
 }

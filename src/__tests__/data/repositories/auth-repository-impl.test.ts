@@ -1,7 +1,7 @@
 import { AuthRepositoryImpl } from '@/data/repositories/auth-repository-impl';
 import { AuthDataSource } from '@/data/datasources/auth-datasource';
 import { UserCredentials, TokenPair } from '@/domain/models/token';
-import { RegisterCredentials, PasswordValidationResult } from '@/domain/models/register';
+import { RegisterCredentials, RegisteredUser, PasswordValidationResult } from '@/domain/models/register';
 
 const mockDataSource: jest.Mocked<AuthDataSource> = {
   requestToken: jest.fn(),
@@ -46,19 +46,25 @@ describe('AuthRepositoryImpl', () => {
   describe('register', () => {
     it('should delegate to dataSource.register', async () => {
       const credentials: RegisterCredentials = {
+        username: 'newuser',
         email: 'new@example.com',
         password: 'pass',
         password2: 'pass',
         first_name: 'A',
         last_name: 'B',
       };
-      const tokenPair: TokenPair = { access: 'access', refresh: 'refresh' };
-      mockDataSource.register.mockResolvedValue(tokenPair);
+      const registeredUser: RegisteredUser = {
+        username: 'newuser',
+        email: 'new@example.com',
+        first_name: 'A',
+        last_name: 'B',
+      };
+      mockDataSource.register.mockResolvedValue(registeredUser);
 
       const result = await repository.register(credentials);
 
       expect(mockDataSource.register).toHaveBeenCalledWith(credentials);
-      expect(result).toEqual(tokenPair);
+      expect(result).toEqual(registeredUser);
     });
   });
 
