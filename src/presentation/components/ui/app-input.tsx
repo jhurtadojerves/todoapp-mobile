@@ -20,6 +20,10 @@ export function AppInput(props: AppInputProps) {
     cursorColor = '$primary',
     focusStyle = { borderColor: '$primary', backgroundColor: '#ffffff' },
     underlineColorAndroid = 'transparent',
+    placeholder,
+    // Every call site already sets a placeholder describing the field, so
+    // default the a11y label to it instead of requiring it at every usage.
+    accessibilityLabel = placeholder,
     ...rest
   } = props;
 
@@ -41,6 +45,8 @@ export function AppInput(props: AppInputProps) {
       cursorColor={cursorColor}
       focusStyle={focusStyle}
       underlineColorAndroid={underlineColorAndroid}
+      placeholder={placeholder}
+      accessibilityLabel={accessibilityLabel}
       {...rest}
     />
   );

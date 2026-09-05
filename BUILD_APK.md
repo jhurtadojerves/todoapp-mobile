@@ -118,3 +118,15 @@ Luego referenciarlo en `android/app/build.gradle` dentro del bloque `signingConf
 | Control sobre el build | Limitado | Total |
 | Costo | Gratis (con limites) | Gratis |
 | Recomendado para | Pruebas y distribucion | Builds customizados |
+
+## Nota de seguridad: tráfico cleartext
+
+`app.json` tiene `android.usesCleartextTraffic: true` para poder hablar con el
+backend local por HTTP plano durante desarrollo (`10.0.2.2:8080`, IP de LAN,
+etc.). Esto habilita HTTP sin cifrar para **toda** la app, no solo para el
+host de desarrollo. Antes de un release real a producción, hay que:
+
+- Apuntar `API_BASE_URL` a un backend HTTPS, y
+- Quitar `usesCleartextTraffic` (o reemplazarlo por un
+  `network_security_config.xml` que solo permita cleartext para el dominio
+  de desarrollo) para no dejar la app aceptando HTTP plano en producción.
