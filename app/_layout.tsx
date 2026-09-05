@@ -1,6 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { PortalProvider } from '@tamagui/portal';
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { TamaguiProvider } from 'tamagui';
@@ -17,7 +17,25 @@ export default function RootLayout() {
       <TamaguiProvider config={tamaguiConfig} defaultTheme={defaultTheme}>
         <PortalProvider>
           <AuthProvider>
-            <Slot />
+            <Stack>
+              {/* Tabs render their own header (see (tabs)/_layout.tsx), so hide the stack's. */}
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="register" options={{ title: 'Registro' }} />
+              <Stack.Screen name="board/new" options={{ title: 'Nuevo tablero' }} />
+              <Stack.Screen name="board/[id]/index" options={{ title: 'Tablero' }} />
+              <Stack.Screen name="board/[id]/edit" options={{ title: 'Editar tablero' }} />
+              <Stack.Screen name="board/[id]/tasks/index" options={{ title: 'Tareas' }} />
+              <Stack.Screen name="board/[id]/tasks/new" options={{ title: 'Nueva tarea' }} />
+              <Stack.Screen
+                name="board/[id]/tasks/[taskId]/index"
+                options={{ title: 'Tarea' }}
+              />
+              <Stack.Screen
+                name="board/[id]/tasks/[taskId]/edit"
+                options={{ title: 'Editar tarea' }}
+              />
+              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            </Stack>
           </AuthProvider>
         </PortalProvider>
       </TamaguiProvider>
