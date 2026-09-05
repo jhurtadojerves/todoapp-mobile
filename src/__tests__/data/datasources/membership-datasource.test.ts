@@ -71,7 +71,7 @@ describe('MembershipDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.fetchMembers('valid-token', 1)).rejects.toThrow(
-        'No se pudieron cargar los miembros.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });
@@ -119,7 +119,7 @@ describe('MembershipDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.addMember('valid-token', 1, input)).rejects.toThrow(
-        'No se pudo agregar al miembro.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });
@@ -151,7 +151,7 @@ describe('MembershipDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.removeMember('valid-token', 1, 5)).rejects.toThrow(
-        'No se pudo quitar al miembro.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });

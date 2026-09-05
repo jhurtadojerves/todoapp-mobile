@@ -57,7 +57,7 @@ describe('StatusDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.fetchStatuses('valid-token', 1)).rejects.toThrow(
-        'No se pudieron cargar los estados.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });
@@ -167,7 +167,7 @@ describe('StatusDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.deleteStatus('valid-token', 1, 1)).rejects.toThrow(
-        'No se pudo eliminar el estado.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });

@@ -64,7 +64,7 @@ describe('SprintDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.fetchSprints('valid-token', 1)).rejects.toThrow(
-        'No se pudieron cargar los sprints.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });
@@ -174,7 +174,7 @@ describe('SprintDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.deleteSprint('valid-token', 1, 1)).rejects.toThrow(
-        'No se pudo eliminar el sprint.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });

@@ -1,88 +1,32 @@
 import { Sprint, SprintInput } from '@/domain/models/sprint';
 import { PaginatedResponse } from '@/domain/models/pagination';
-import { API_BASE_URL } from '@/shared/config/api';
+import { apiFetch } from '@/shared/api/http-client';
 
-const sprintsEndpoint = (boardId: number) => `${API_BASE_URL}/api/v1/boards/${boardId}/sprints/`;
-const sprintDetailEndpoint = (boardId: number, id: number) =>
-  `${API_BASE_URL}/api/v1/boards/${boardId}/sprints/${id}/`;
+const sprintsPath = (boardId: number) => `/api/v1/boards/${boardId}/sprints/`;
+const sprintDetailPath = (boardId: number, id: number) => `/api/v1/boards/${boardId}/sprints/${id}/`;
 
 export class SprintDataSource {
   async fetchSprints(token: string, boardId: number): Promise<Sprint[]> {
-    const response = await fetch(sprintsEndpoint(boardId), {
-      headers: { Authorization: `Bearer ${token}` },
+    const data = await apiFetch<PaginatedResponse<Sprint> | Sprint[]>(sprintsPath(boardId), {
+      token,
     });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null;
-      throw new Error(errorPayload?.detail ?? 'No se pudieron cargar los sprints.');
-    }
-
-    const data = (await response.json()) as PaginatedResponse<Sprint> | Sprint[];
     return Array.isArray(data) ? data : data.results;
   }
 
-  async createSprint(token: string, boardId: number, input: SprintInput): Promise<Sprint> {
-    const response = await fetch(sprintsEndpoint(boardId), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(input),
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string; name?: string[] }
-        | null;
-      throw new Error(
-        errorPayload?.detail ?? errorPayload?.name?.[0] ?? 'No se pudo crear el sprint.'
-      );
-    }
-
-    return response.json();
+  createSprint(token: string, boardId: number, input: SprintInput): Promise<Sprint> {
+    return apiFetch<Sprint>(sprintsPath(boardId), { method: 'POST', body: input, token });
   }
 
-  async updateSprint(
+  updateSprint(
     token: string,
     boardId: number,
     id: number,
     input: SprintInput
   ): Promise<Sprint> {
-    const response = await fetch(sprintDetailEndpoint(boardId, id), {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(input),
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string; name?: string[] }
-        | null;
-      throw new Error(
-        errorPayload?.detail ?? errorPayload?.name?.[0] ?? 'No se pudo actualizar el sprint.'
-      );
-    }
-
-    return response.json();
+    return apiFetch<Sprint>(sprintDetailPath(boardId, id), { method: 'PATCH', body: input, token });
   }
 
-  async deleteSprint(token: string, boardId: number, id: number): Promise<void> {
-    const response = await fetch(sprintDetailEndpoint(boardId, id), {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null;
-      throw new Error(errorPayload?.detail ?? 'No se pudo eliminar el sprint.');
-    }
+  deleteSprint(token: string, boardId: number, id: number): Promise<void> {
+    return apiFetch<void>(sprintDetailPath(boardId, id), { method: 'DELETE', token });
   }
 }

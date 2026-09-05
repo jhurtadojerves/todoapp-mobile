@@ -59,7 +59,7 @@ describe('AuthDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(400, {}));
 
       await expect(dataSource.requestToken(credentials)).rejects.toThrow(
-        'No se pudo iniciar sesión. Revisa tus credenciales.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });
@@ -91,7 +91,7 @@ describe('AuthDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(401, {}));
 
       await expect(dataSource.refreshToken('bad-token')).rejects.toThrow(
-        'No se pudo refrescar la sesión.'
+        'Tu sesión expiró. Iniciá sesión de nuevo.'
       );
     });
   });
@@ -181,7 +181,7 @@ describe('AuthDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.register(credentials)).rejects.toThrow(
-        'No se pudo completar el registro.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });

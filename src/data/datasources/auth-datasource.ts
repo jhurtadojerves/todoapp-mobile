@@ -1,80 +1,36 @@
 import { PasswordValidationResult, RegisterCredentials, RegisteredUser } from '@/domain/models/register';
 import { TokenPair, UserCredentials } from '@/domain/models/token';
 import { API_BASE_URL } from '@/shared/config/api';
+import { apiFetch } from '@/shared/api/http-client';
 
-const AUTH_ENDPOINT = `${API_BASE_URL}/api/v1/auth/token/`;
-const REFRESH_ENDPOINT = `${API_BASE_URL}/api/v1/auth/token/refresh/`;
-const REGISTER_ENDPOINT = `${API_BASE_URL}/api/v1/users/register/`;
 const VALIDATE_PASSWORD_ENDPOINT = `${API_BASE_URL}/api/v1/auth/password/validate/`;
 
 export class AuthDataSource {
-  async requestToken(credentials: UserCredentials): Promise<TokenPair> {
-    const response = await fetch(AUTH_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null;
-      throw new Error(
-        errorPayload?.detail ?? 'No se pudo iniciar sesión. Revisa tus credenciales.'
-      );
-    }
-
-    return response.json();
+  requestToken(credentials: UserCredentials): Promise<TokenPair> {
+    return apiFetch<TokenPair>('/api/v1/auth/token/', { method: 'POST', body: credentials });
   }
 
   async refreshToken(refresh: string): Promise<TokenPair> {
-    const response = await fetch(REFRESH_ENDPOINT, {
+    const data = await apiFetch<Partial<TokenPair>>('/api/v1/auth/token/refresh/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh }),
+      body: { refresh },
     });
-
-    if (!response.ok) {
-      throw new Error('No se pudo refrescar la sesión.');
-    }
-
-    const data = (await response.json()) as Partial<TokenPair>;
     return {
       access: data.access ?? '',
       refresh: data.refresh ?? refresh,
     };
   }
 
-  async register(credentials: RegisterCredentials): Promise<RegisteredUser> {
+  register(credentials: RegisterCredentials): Promise<RegisteredUser> {
     const { username, email, password, first_name, last_name } = credentials;
-    const response = await fetch(REGISTER_ENDPOINT, {
+    return apiFetch<RegisteredUser>('/api/v1/users/register/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password, first_name, last_name }),
+      body: { username, email, password, first_name, last_name },
     });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string; username?: string[]; email?: string[]; password?: string[] }
-        | null;
-
-      let errorMessage = 'No se pudo completar el registro.';
-      if (errorPayload?.detail) {
-        errorMessage = errorPayload.detail;
-      } else if (errorPayload?.username) {
-        errorMessage = errorPayload.username[0];
-      } else if (errorPayload?.email) {
-        errorMessage = errorPayload.email[0];
-      } else if (errorPayload?.password) {
-        errorMessage = errorPayload.password[0];
-      }
-
-      throw new Error(errorMessage);
-    }
-
-    return response.json();
   }
 
+  // Reports validation results rather than throwing, so it stays on raw fetch
+  // instead of apiFetch's throw-on-error contract.
   async validatePassword(password: string): Promise<PasswordValidationResult> {
     const response = await fetch(VALIDATE_PASSWORD_ENDPOINT, {
       method: 'POST',

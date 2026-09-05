@@ -81,7 +81,7 @@ describe('BoardDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.fetchBoards('some-token')).rejects.toThrow(
-        'No se pudieron cargar los tableros.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });
@@ -160,7 +160,7 @@ describe('BoardDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.createBoard('valid-token', input)).rejects.toThrow(
-        'No se pudo crear el tablero.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });
@@ -228,7 +228,7 @@ describe('BoardDataSource', () => {
       mockFetch.mockResolvedValue(mockResponse(500, {}));
 
       await expect(dataSource.deleteBoard('valid-token', 1)).rejects.toThrow(
-        'No se pudo eliminar el tablero.'
+        'Ocurrió un error inesperado. Intentá de nuevo.'
       );
     });
   });

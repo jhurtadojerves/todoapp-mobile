@@ -1,65 +1,28 @@
 import { BoardMembership, BoardMembershipInput } from '@/domain/models/membership';
 import { PaginatedResponse } from '@/domain/models/pagination';
-import { API_BASE_URL } from '@/shared/config/api';
+import { apiFetch } from '@/shared/api/http-client';
 
-const membersEndpoint = (boardId: number) => `${API_BASE_URL}/api/v1/boards/${boardId}/members/`;
-const memberDetailEndpoint = (boardId: number, id: number) =>
-  `${API_BASE_URL}/api/v1/boards/${boardId}/members/${id}/`;
+const membersPath = (boardId: number) => `/api/v1/boards/${boardId}/members/`;
+const memberDetailPath = (boardId: number, id: number) => `/api/v1/boards/${boardId}/members/${id}/`;
 
 export class MembershipDataSource {
   async fetchMembers(token: string, boardId: number): Promise<BoardMembership[]> {
-    const response = await fetch(membersEndpoint(boardId), {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null;
-      throw new Error(errorPayload?.detail ?? 'No se pudieron cargar los miembros.');
-    }
-
-    const data = (await response.json()) as PaginatedResponse<BoardMembership> | BoardMembership[];
+    const data = await apiFetch<PaginatedResponse<BoardMembership> | BoardMembership[]>(
+      membersPath(boardId),
+      { token }
+    );
     return Array.isArray(data) ? data : data.results;
   }
 
-  async addMember(
+  addMember(
     token: string,
     boardId: number,
     input: BoardMembershipInput
   ): Promise<BoardMembership> {
-    const response = await fetch(membersEndpoint(boardId), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(input),
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string; email?: string[] }
-        | null;
-      throw new Error(
-        errorPayload?.detail ?? errorPayload?.email?.[0] ?? 'No se pudo agregar al miembro.'
-      );
-    }
-
-    return response.json();
+    return apiFetch<BoardMembership>(membersPath(boardId), { method: 'POST', body: input, token });
   }
 
-  async removeMember(token: string, boardId: number, membershipId: number): Promise<void> {
-    const response = await fetch(memberDetailEndpoint(boardId, membershipId), {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null;
-      throw new Error(errorPayload?.detail ?? 'No se pudo quitar al miembro.');
-    }
+  removeMember(token: string, boardId: number, membershipId: number): Promise<void> {
+    return apiFetch<void>(memberDetailPath(boardId, membershipId), { method: 'DELETE', token });
   }
 }

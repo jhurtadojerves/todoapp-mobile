@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { router } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { UserCredentials } from '@/domain/models/token';
 import { RegisterCredentials } from '@/domain/models/register';
 import { dependencies } from '@/shared/di/dependencies';
 import { storage } from '@/shared/utils/storage';
 import { decodeJwtPayload } from '@/shared/utils/jwt';
+import { registerAuthHooks } from '@/shared/api/http-client';
 
 export function useAuthSession() {
   const [token, setToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const refreshInFlightRef = useRef<Promise<string | null> | null>(null);
 
   const userId = useMemo(() => {
     if (!token) return null;
@@ -39,21 +42,39 @@ export function useAuthSession() {
         setToken(storedAccess);
         setRefreshToken(storedRefresh);
       }
-
-      if (!storedRefresh) {
-        return;
-      }
-
-      try {
-        const tokens = await dependencies.refreshTokenUseCase.execute(storedRefresh);
-        await persistTokens(tokens.access, tokens.refresh);
-      } catch {
-        await clearTokens();
-      }
     };
 
     restoreSession();
-  }, [clearTokens, persistTokens]);
+  }, []);
+
+  // De-duplicated: if a refresh is already in flight (e.g. two API calls hit
+  // an expired access token around the same time), concurrent callers await
+  // the same promise instead of racing separate refresh requests — the
+  // backend rotates refresh tokens on use, so a second concurrent refresh
+  // call fails outright and would otherwise look like a real session expiry.
+  const refreshAccessToken = useCallback((): Promise<string | null> => {
+    if (!refreshToken) return Promise.resolve(null);
+
+    if (refreshInFlightRef.current) {
+      return refreshInFlightRef.current;
+    }
+
+    const promise = (async () => {
+      try {
+        const tokens = await dependencies.refreshTokenUseCase.execute(refreshToken);
+        await persistTokens(tokens.access, tokens.refresh);
+        return tokens.access;
+      } catch {
+        await clearTokens();
+        return null;
+      } finally {
+        refreshInFlightRef.current = null;
+      }
+    })();
+
+    refreshInFlightRef.current = promise;
+    return promise;
+  }, [refreshToken, persistTokens, clearTokens]);
 
   const login = useCallback(
     async (credentials: UserCredentials) => {
@@ -87,19 +108,27 @@ export function useAuthSession() {
   );
 
   const refreshSession = useCallback(async () => {
-    if (!refreshToken) return;
     setIsAuthenticating(true);
     try {
-      const tokens = await dependencies.refreshTokenUseCase.execute(refreshToken);
-      await persistTokens(tokens.access, tokens.refresh);
+      await refreshAccessToken();
     } finally {
       setIsAuthenticating(false);
     }
-  }, [refreshToken, persistTokens]);
+  }, [refreshAccessToken]);
 
   const logout = useCallback(() => {
     void clearTokens();
   }, [clearTokens]);
+
+  const onUnauthorized = useCallback(() => {
+    void clearTokens();
+    router.replace('/boards');
+  }, [clearTokens]);
+
+  useEffect(() => {
+    registerAuthHooks({ refreshAccessToken, onUnauthorized });
+    return () => registerAuthHooks(null);
+  }, [refreshAccessToken, onUnauthorized]);
 
   return useMemo(
     () => ({

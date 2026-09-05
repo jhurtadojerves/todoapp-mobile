@@ -67,7 +67,7 @@ describe('UserDataSource', () => {
     mockFetch.mockResolvedValue(mockResponse(500, {}));
 
     await expect(dataSource.fetchUsers('some-token')).rejects.toThrow(
-      'No se pudieron cargar los usuarios.'
+      'Ocurrió un error inesperado. Intentá de nuevo.'
     );
   });
 });

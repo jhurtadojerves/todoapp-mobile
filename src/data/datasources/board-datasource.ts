@@ -1,97 +1,29 @@
 import { Board, BoardInput } from '@/domain/models/board';
 import { PaginatedResponse } from '@/domain/models/pagination';
-import { API_BASE_URL } from '@/shared/config/api';
+import { apiFetch } from '@/shared/api/http-client';
 
-const BOARDS_ENDPOINT = `${API_BASE_URL}/api/v1/boards/`;
-const boardDetailEndpoint = (id: number) => `${BOARDS_ENDPOINT}${id}/`;
+const BOARDS_PATH = '/api/v1/boards/';
+const boardDetailPath = (id: number) => `${BOARDS_PATH}${id}/`;
 
 export class BoardDataSource {
   async fetchBoards(token: string): Promise<Board[]> {
-    const response = await fetch(BOARDS_ENDPOINT, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null;
-      throw new Error(errorPayload?.detail ?? 'No se pudieron cargar los tableros.');
-    }
-
-    const data = (await response.json()) as PaginatedResponse<Board> | Board[];
+    const data = await apiFetch<PaginatedResponse<Board> | Board[]>(BOARDS_PATH, { token });
     return Array.isArray(data) ? data : data.results;
   }
 
-  async fetchBoard(token: string, id: number): Promise<Board> {
-    const response = await fetch(boardDetailEndpoint(id), {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null;
-      throw new Error(errorPayload?.detail ?? 'No se pudo cargar el tablero.');
-    }
-
-    return response.json();
+  fetchBoard(token: string, id: number): Promise<Board> {
+    return apiFetch<Board>(boardDetailPath(id), { token });
   }
 
-  async createBoard(token: string, input: BoardInput): Promise<Board> {
-    const response = await fetch(BOARDS_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(input),
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string; name?: string[] }
-        | null;
-      throw new Error(
-        errorPayload?.detail ?? errorPayload?.name?.[0] ?? 'No se pudo crear el tablero.'
-      );
-    }
-
-    return response.json();
+  createBoard(token: string, input: BoardInput): Promise<Board> {
+    return apiFetch<Board>(BOARDS_PATH, { method: 'POST', body: input, token });
   }
 
-  async updateBoard(token: string, id: number, input: BoardInput): Promise<Board> {
-    const response = await fetch(boardDetailEndpoint(id), {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(input),
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string; name?: string[] }
-        | null;
-      throw new Error(
-        errorPayload?.detail ?? errorPayload?.name?.[0] ?? 'No se pudo actualizar el tablero.'
-      );
-    }
-
-    return response.json();
+  updateBoard(token: string, id: number, input: BoardInput): Promise<Board> {
+    return apiFetch<Board>(boardDetailPath(id), { method: 'PATCH', body: input, token });
   }
 
-  async deleteBoard(token: string, id: number): Promise<void> {
-    const response = await fetch(boardDetailEndpoint(id), {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as
-        | { detail?: string }
-        | null;
-      throw new Error(errorPayload?.detail ?? 'No se pudo eliminar el tablero.');
-    }
+  deleteBoard(token: string, id: number): Promise<void> {
+    return apiFetch<void>(boardDetailPath(id), { method: 'DELETE', token });
   }
 }
