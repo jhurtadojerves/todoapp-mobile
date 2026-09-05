@@ -20,6 +20,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="boards"
+        options={{
+          title: 'Boards',
+          tabBarIcon: ({ color, size }) => <Ionicons name="grid" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="users"
         options={{
           title: 'Users',
