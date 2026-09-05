@@ -1,13 +1,15 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Paragraph, ScrollView, Spinner, YStack } from 'tamagui';
+import { Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
 
 import { MemberList } from '@/presentation/components/members/member-list';
+import { SprintList } from '@/presentation/components/sprints/sprint-list';
 import { StatusList } from '@/presentation/components/statuses/status-list';
 import { AppButton, AppInput } from '@/presentation/components/ui';
 import { useBoardDetailViewModel } from '@/presentation/viewmodels/use-board-detail-viewmodel';
 import { useBoardMembersViewModel } from '@/presentation/viewmodels/use-board-members-viewmodel';
+import { useBoardSprintsViewModel } from '@/presentation/viewmodels/use-board-sprints-viewmodel';
 import { useBoardStatusesViewModel } from '@/presentation/viewmodels/use-board-statuses-viewmodel';
 import { confirmAction } from '@/shared/utils/confirm';
 
@@ -54,6 +56,35 @@ export function BoardDetailScreen({ boardId }: Props) {
     deleteError: deleteStatusError,
     deleteStatus,
   } = useBoardStatusesViewModel(boardId);
+  const {
+    sprints,
+    isLoading: isLoadingSprints,
+    error: sprintsError,
+    newName: newSprintName,
+    setNewName: setNewSprintName,
+    newStartDate: newSprintStartDate,
+    setNewStartDate: setNewSprintStartDate,
+    newEndDate: newSprintEndDate,
+    setNewEndDate: setNewSprintEndDate,
+    isCreating: isCreatingSprint,
+    createError: createSprintError,
+    createSprint,
+    editingId: editingSprintId,
+    editName: editSprintName,
+    setEditName: setEditSprintName,
+    editStartDate: editSprintStartDate,
+    setEditStartDate: setEditSprintStartDate,
+    editEndDate: editSprintEndDate,
+    setEditEndDate: setEditSprintEndDate,
+    startEdit: startEditSprint,
+    cancelEdit: cancelEditSprint,
+    isSavingEdit: isSavingSprintEdit,
+    editError: editSprintError,
+    saveEdit: saveSprintEdit,
+    deletingId: deletingSprintId,
+    deleteError: deleteSprintError,
+    deleteSprint,
+  } = useBoardSprintsViewModel(boardId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const handleDelete = async () => {
@@ -114,6 +145,31 @@ export function BoardDetailScreen({ boardId }: Props) {
     if (!confirmed) return;
 
     deleteStatus(id).catch(() => {});
+  };
+
+  const handleCreateSprint = async () => {
+    try {
+      await createSprint();
+    } catch {
+    }
+  };
+
+  const handleSaveSprintEdit = async () => {
+    try {
+      await saveSprintEdit();
+    } catch {
+    }
+  };
+
+  const handleDeleteSprint = async (id: number) => {
+    const confirmed = await confirmAction({
+      title: 'Borrar sprint',
+      message: '¿Seguro que querés borrar este sprint?',
+      confirmLabel: 'Borrar',
+    });
+    if (!confirmed) return;
+
+    deleteSprint(id).catch(() => {});
   };
 
   if (isLoading) {
@@ -245,6 +301,74 @@ export function BoardDetailScreen({ boardId }: Props) {
                     onSaveEdit={handleSaveStatusEdit}
                     deletingId={deletingStatusId}
                     onDelete={handleDeleteStatus}
+                  />
+                )}
+              </YStack>
+
+              <YStack gap="$3" borderTopWidth={1} borderColor="$border" paddingTop="$4">
+                <Paragraph fontSize={18} fontWeight="700" color="$text">
+                  Sprints
+                </Paragraph>
+
+                {isOwner ? (
+                  <YStack gap="$2">
+                    <AppInput
+                      placeholder="Nombre del sprint"
+                      value={newSprintName}
+                      onChangeText={setNewSprintName}
+                    />
+                    <XStack gap="$2">
+                      <AppInput
+                        flex={1}
+                        placeholder="Inicio (AAAA-MM-DD)"
+                        value={newSprintStartDate}
+                        onChangeText={setNewSprintStartDate}
+                      />
+                      <AppInput
+                        flex={1}
+                        placeholder="Fin (AAAA-MM-DD)"
+                        value={newSprintEndDate}
+                        onChangeText={setNewSprintEndDate}
+                      />
+                    </XStack>
+                    {createSprintError ? (
+                      <Paragraph color="$danger" fontSize={13}>
+                        {createSprintError}
+                      </Paragraph>
+                    ) : null}
+                    <AppButton
+                      label="Agregar sprint"
+                      loading={isCreatingSprint}
+                      disabled={!newSprintName.trim() || isCreatingSprint}
+                      onPress={handleCreateSprint}
+                    />
+                  </YStack>
+                ) : null}
+
+                {deleteSprintError ? <Paragraph color="$danger">{deleteSprintError}</Paragraph> : null}
+
+                {isLoadingSprints ? (
+                  <Spinner />
+                ) : sprintsError ? (
+                  <Paragraph color="$danger">{sprintsError}</Paragraph>
+                ) : (
+                  <SprintList
+                    sprints={sprints}
+                    canManage={isOwner}
+                    editingId={editingSprintId}
+                    editName={editSprintName}
+                    onEditNameChange={setEditSprintName}
+                    editStartDate={editSprintStartDate}
+                    onEditStartDateChange={setEditSprintStartDate}
+                    editEndDate={editSprintEndDate}
+                    onEditEndDateChange={setEditSprintEndDate}
+                    isSavingEdit={isSavingSprintEdit}
+                    editError={editSprintError}
+                    onStartEdit={startEditSprint}
+                    onCancelEdit={cancelEditSprint}
+                    onSaveEdit={handleSaveSprintEdit}
+                    deletingId={deletingSprintId}
+                    onDelete={handleDeleteSprint}
                   />
                 )}
               </YStack>
