@@ -5,6 +5,8 @@ import { UserRepositoryImpl } from '@/data/repositories/user-repository-impl';
 import { GetUsersUseCase } from '@/domain/usecases/get-users';
 import { LoginUseCase } from '@/domain/usecases/login';
 import { RefreshTokenUseCase } from '@/domain/usecases/refresh-token';
+import { RegisterUseCase } from '@/domain/usecases/register';
+import { ValidatePasswordUseCase } from '@/domain/usecases/validate-password';
 
 const authDataSource = new AuthDataSource();
 const userDataSource = new UserDataSource();
@@ -15,4 +17,6 @@ export const dependencies = {
   loginUseCase: new LoginUseCase(authRepository),
   refreshTokenUseCase: new RefreshTokenUseCase(authRepository),
   getUsersUseCase: new GetUsersUseCase(userRepository),
+  registerUseCase: new RegisterUseCase(authRepository),
+  validatePasswordUseCase: new ValidatePasswordUseCase(authRepository),
 };

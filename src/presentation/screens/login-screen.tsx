@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { Paragraph, YStack } from 'tamagui';
+import { Paragraph, YStack, XStack } from 'tamagui';
 
 import { AppButton, AppInput, AppTitle } from '@/presentation/components/ui';
 import { useAuth } from '@/presentation/contexts/auth-context';
@@ -22,7 +22,6 @@ export function LoginScreen() {
       await submit();
       router.replace('/users');
     } catch {
-      // El mensaje de error ya está en el estado
     }
   };
 
@@ -71,6 +70,21 @@ export function LoginScreen() {
           marginTop="$3"
           label="Acceder"
         />
+
+        <XStack justifyContent="center" alignItems="center" marginTop="$4" gap="$2">
+          <Paragraph color="$gray11" fontSize={14}>
+            ¿No tienes cuenta?
+          </Paragraph>
+          <Paragraph
+            color="$primary"
+            fontSize={14}
+            fontWeight="600"
+            onPress={() => router.push('/register' as any)}
+            pressStyle={{ opacity: 0.7 }}
+          >
+            Regístrate
+          </Paragraph>
+        </XStack>
       </YStack>
     </YStack>
   );

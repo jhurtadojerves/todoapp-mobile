@@ -1,4 +1,5 @@
 import { UserCredentials } from '@/domain/models/token';
+import { RegisterCredentials } from '@/domain/models/register';
 import { useAuthSession } from '@/presentation/hooks/use-auth-session';
 import { createContext, useContext, type ReactNode } from 'react';
 
@@ -8,6 +9,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isAuthenticating: boolean;
   login(credentials: UserCredentials): Promise<void>;
+  register(credentials: RegisterCredentials): Promise<void>;
   logout(): void;
   refreshSession(): Promise<void>;
 }
