@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Paragraph, ScrollView, Spinner, YStack } from 'tamagui';
 
 import { MemberList } from '@/presentation/components/members/member-list';
+import { StatusList } from '@/presentation/components/statuses/status-list';
 import { AppButton, AppInput } from '@/presentation/components/ui';
 import { useBoardDetailViewModel } from '@/presentation/viewmodels/use-board-detail-viewmodel';
 import { useBoardMembersViewModel } from '@/presentation/viewmodels/use-board-members-viewmodel';
+import { useBoardStatusesViewModel } from '@/presentation/viewmodels/use-board-statuses-viewmodel';
 import { confirmAction } from '@/shared/utils/confirm';
 
 type Props = {
@@ -31,6 +33,27 @@ export function BoardDetailScreen({ boardId }: Props) {
     removeError,
     removeMember,
   } = useBoardMembersViewModel(boardId);
+  const {
+    statuses,
+    isLoading: isLoadingStatuses,
+    error: statusesError,
+    newName,
+    setNewName,
+    isCreating,
+    createError,
+    createStatus,
+    editingId,
+    editName,
+    setEditName,
+    startEdit,
+    cancelEdit,
+    isSavingEdit,
+    editError,
+    saveEdit,
+    deletingId: deletingStatusId,
+    deleteError: deleteStatusError,
+    deleteStatus,
+  } = useBoardStatusesViewModel(boardId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const handleDelete = async () => {
@@ -66,6 +89,31 @@ export function BoardDetailScreen({ boardId }: Props) {
     if (!confirmed) return;
 
     removeMember(membershipId).catch(() => {});
+  };
+
+  const handleCreateStatus = async () => {
+    try {
+      await createStatus();
+    } catch {
+    }
+  };
+
+  const handleSaveStatusEdit = async () => {
+    try {
+      await saveEdit();
+    } catch {
+    }
+  };
+
+  const handleDeleteStatus = async (id: number) => {
+    const confirmed = await confirmAction({
+      title: 'Borrar estado',
+      message: '¿Seguro que querés borrar este estado?',
+      confirmLabel: 'Borrar',
+    });
+    if (!confirmed) return;
+
+    deleteStatus(id).catch(() => {});
   };
 
   if (isLoading) {
@@ -151,6 +199,52 @@ export function BoardDetailScreen({ boardId }: Props) {
                     isOwner={isOwner}
                     removingId={removingId}
                     onRemove={handleRemove}
+                  />
+                )}
+              </YStack>
+
+              <YStack gap="$3" borderTopWidth={1} borderColor="$border" paddingTop="$4">
+                <Paragraph fontSize={18} fontWeight="700" color="$text">
+                  Estados
+                </Paragraph>
+
+                {isOwner ? (
+                  <YStack gap="$2">
+                    <AppInput placeholder="Nombre del estado" value={newName} onChangeText={setNewName} />
+                    {createError ? (
+                      <Paragraph color="$danger" fontSize={13}>
+                        {createError}
+                      </Paragraph>
+                    ) : null}
+                    <AppButton
+                      label="Agregar estado"
+                      loading={isCreating}
+                      disabled={!newName.trim() || isCreating}
+                      onPress={handleCreateStatus}
+                    />
+                  </YStack>
+                ) : null}
+
+                {deleteStatusError ? <Paragraph color="$danger">{deleteStatusError}</Paragraph> : null}
+
+                {isLoadingStatuses ? (
+                  <Spinner />
+                ) : statusesError ? (
+                  <Paragraph color="$danger">{statusesError}</Paragraph>
+                ) : (
+                  <StatusList
+                    statuses={statuses}
+                    canManage={isOwner}
+                    editingId={editingId}
+                    editName={editName}
+                    onEditNameChange={setEditName}
+                    isSavingEdit={isSavingEdit}
+                    editError={editError}
+                    onStartEdit={startEdit}
+                    onCancelEdit={cancelEdit}
+                    onSaveEdit={handleSaveStatusEdit}
+                    deletingId={deletingStatusId}
+                    onDelete={handleDeleteStatus}
                   />
                 )}
               </YStack>
