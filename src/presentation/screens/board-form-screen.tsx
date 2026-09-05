@@ -1,22 +1,22 @@
-import { useRouter } from 'expo-router';
 import { Paragraph, ScrollView, Spinner, YStack } from 'tamagui';
 
 import { AppButton, AppInput, AppTitle } from '@/presentation/components/ui';
 import { useBoardFormViewModel } from '@/presentation/viewmodels/use-board-form-viewmodel';
+import { goBackOr } from '@/shared/utils/navigation';
 
 type Props = {
   boardId?: number;
 };
 
 export function BoardFormScreen({ boardId }: Props) {
-  const router = useRouter();
   const { fields, setField, submit, isEditing, isLoading, isSubmitting, error, nameError, canSubmit } =
     useBoardFormViewModel(boardId);
+  const fallbackHref = isEditing ? (`/board/${boardId}` as const) : '/boards';
 
   const handleSubmit = async () => {
     try {
       await submit();
-      router.back();
+      goBackOr(fallbackHref);
     } catch {
     }
   };
@@ -89,7 +89,7 @@ export function BoardFormScreen({ boardId }: Props) {
 
           <AppButton
             variant="outlined"
-            onPress={() => router.back()}
+            onPress={() => goBackOr(fallbackHref)}
             label="Cancelar"
           />
         </YStack>

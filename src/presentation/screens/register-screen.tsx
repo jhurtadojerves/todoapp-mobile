@@ -5,6 +5,7 @@ import { Paragraph, ScrollView, YStack } from 'tamagui';
 import { AppButton, AppInput, AppTitle } from '@/presentation/components/ui';
 import { useAuth } from '@/presentation/contexts/auth-context';
 import { useRegisterViewModel } from '@/presentation/viewmodels/use-register-viewmodel';
+import { goBackOr } from '@/shared/utils/navigation';
 
 export function RegisterScreen() {
   const router = useRouter();
@@ -164,7 +165,7 @@ export function RegisterScreen() {
           />
 
           <AppButton
-            onPress={() => router.back()}
+            onPress={() => goBackOr('/')}
             disabled={isAuthenticating}
             variant="outlined"
             label="Volver al inicio de sesión"

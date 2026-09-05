@@ -1,9 +1,15 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 
+import { HeaderBackButton } from '@/presentation/components/ui';
 import { BoardDetailScreen } from '@/presentation/screens/board-detail-screen';
 
 export default function BoardDetailRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  return <BoardDetailScreen boardId={Number(id)} />;
+  return (
+    <>
+      <Stack.Screen options={{ headerLeft: () => <HeaderBackButton fallbackHref="/boards" /> }} />
+      <BoardDetailScreen boardId={Number(id)} />
+    </>
+  );
 }

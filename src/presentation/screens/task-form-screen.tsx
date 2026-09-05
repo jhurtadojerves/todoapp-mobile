@@ -1,8 +1,8 @@
-import { useRouter } from 'expo-router';
 import { Paragraph, ScrollView, Spinner, YStack } from 'tamagui';
 
 import { AppButton, AppInput, AppTitle, ChipPicker } from '@/presentation/components/ui';
 import { useTaskFormViewModel } from '@/presentation/viewmodels/use-task-form-viewmodel';
+import { goBackOr } from '@/shared/utils/navigation';
 
 type Props = {
   boardId: number;
@@ -10,7 +10,6 @@ type Props = {
 };
 
 export function TaskFormScreen({ boardId, taskId }: Props) {
-  const router = useRouter();
   const {
     title,
     setTitle,
@@ -33,11 +32,14 @@ export function TaskFormScreen({ boardId, taskId }: Props) {
     canSubmit,
     submit,
   } = useTaskFormViewModel(boardId, taskId);
+  const fallbackHref = isEditing
+    ? (`/board/${boardId}/tasks/${taskId}` as const)
+    : (`/board/${boardId}/tasks` as const);
 
   const handleSubmit = async () => {
     try {
       await submit();
-      router.back();
+      goBackOr(fallbackHref);
     } catch {
     }
   };
@@ -128,7 +130,7 @@ export function TaskFormScreen({ boardId, taskId }: Props) {
             label={isEditing ? 'Guardar cambios' : 'Crear tarea'}
           />
 
-          <AppButton variant="outlined" onPress={() => router.back()} label="Cancelar" />
+          <AppButton variant="outlined" onPress={() => goBackOr(fallbackHref)} label="Cancelar" />
         </YStack>
       </YStack>
     </ScrollView>
