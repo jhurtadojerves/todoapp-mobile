@@ -1,3 +1,4 @@
+import { AttachmentLocalDataSource } from '@/data/datasources/attachment-local-datasource';
 import { AuthDataSource } from '@/data/datasources/auth-datasource';
 import { BoardDataSource } from '@/data/datasources/board-datasource';
 import { CommentDataSource } from '@/data/datasources/comment-datasource';
@@ -6,6 +7,7 @@ import { SprintDataSource } from '@/data/datasources/sprint-datasource';
 import { StatusDataSource } from '@/data/datasources/status-datasource';
 import { TaskDataSource } from '@/data/datasources/task-datasource';
 import { UserDataSource } from '@/data/datasources/user-datasource';
+import { AttachmentRepositoryImpl } from '@/data/repositories/attachment-repository-impl';
 import { AuthRepositoryImpl } from '@/data/repositories/auth-repository-impl';
 import { BoardRepositoryImpl } from '@/data/repositories/board-repository-impl';
 import { CommentRepositoryImpl } from '@/data/repositories/comment-repository-impl';
@@ -15,6 +17,7 @@ import { StatusRepositoryImpl } from '@/data/repositories/status-repository-impl
 import { TaskRepositoryImpl } from '@/data/repositories/task-repository-impl';
 import { UserRepositoryImpl } from '@/data/repositories/user-repository-impl';
 import { AddMemberUseCase } from '@/domain/usecases/add-member';
+import { AddTaskAttachmentUseCase } from '@/domain/usecases/add-task-attachment';
 import { CreateBoardUseCase } from '@/domain/usecases/create-board';
 import { CreateCommentUseCase } from '@/domain/usecases/create-comment';
 import { CreateSprintUseCase } from '@/domain/usecases/create-sprint';
@@ -25,6 +28,7 @@ import { DeleteCommentUseCase } from '@/domain/usecases/delete-comment';
 import { DeleteSprintUseCase } from '@/domain/usecases/delete-sprint';
 import { DeleteStatusUseCase } from '@/domain/usecases/delete-status';
 import { DeleteTaskUseCase } from '@/domain/usecases/delete-task';
+import { DeleteTaskAttachmentUseCase } from '@/domain/usecases/delete-task-attachment';
 import { GetBoardUseCase } from '@/domain/usecases/get-board';
 import { GetBoardsUseCase } from '@/domain/usecases/get-boards';
 import { GetCommentsUseCase } from '@/domain/usecases/get-comments';
@@ -32,6 +36,7 @@ import { GetMembersUseCase } from '@/domain/usecases/get-members';
 import { GetSprintsUseCase } from '@/domain/usecases/get-sprints';
 import { GetStatusesUseCase } from '@/domain/usecases/get-statuses';
 import { GetTaskUseCase } from '@/domain/usecases/get-task';
+import { GetTaskAttachmentsUseCase } from '@/domain/usecases/get-task-attachments';
 import { GetTasksUseCase } from '@/domain/usecases/get-tasks';
 import { GetUsersUseCase } from '@/domain/usecases/get-users';
 import { LoginUseCase } from '@/domain/usecases/login';
@@ -53,6 +58,7 @@ const statusDataSource = new StatusDataSource();
 const sprintDataSource = new SprintDataSource();
 const taskDataSource = new TaskDataSource();
 const commentDataSource = new CommentDataSource();
+const attachmentLocalDataSource = new AttachmentLocalDataSource();
 const authRepository = new AuthRepositoryImpl(authDataSource);
 const userRepository = new UserRepositoryImpl(userDataSource);
 const boardRepository = new BoardRepositoryImpl(boardDataSource);
@@ -61,6 +67,7 @@ const statusRepository = new StatusRepositoryImpl(statusDataSource);
 const sprintRepository = new SprintRepositoryImpl(sprintDataSource);
 const taskRepository = new TaskRepositoryImpl(taskDataSource);
 const commentRepository = new CommentRepositoryImpl(commentDataSource);
+const attachmentRepository = new AttachmentRepositoryImpl(attachmentLocalDataSource);
 
 export const dependencies = {
   loginUseCase: new LoginUseCase(authRepository),
@@ -93,4 +100,7 @@ export const dependencies = {
   createCommentUseCase: new CreateCommentUseCase(commentRepository),
   updateCommentUseCase: new UpdateCommentUseCase(commentRepository),
   deleteCommentUseCase: new DeleteCommentUseCase(commentRepository),
+  getTaskAttachmentsUseCase: new GetTaskAttachmentsUseCase(attachmentRepository),
+  addTaskAttachmentUseCase: new AddTaskAttachmentUseCase(attachmentRepository),
+  deleteTaskAttachmentUseCase: new DeleteTaskAttachmentUseCase(attachmentRepository),
 };

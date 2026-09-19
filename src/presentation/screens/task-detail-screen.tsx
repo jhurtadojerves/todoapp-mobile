@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
 
 import { CommentList } from '@/presentation/components/comments/comment-list';
+import { TaskAttachmentList } from '@/presentation/components/tasks/task-attachment-list';
 import { AppButton, AppInput } from '@/presentation/components/ui';
 import { useAuth } from '@/presentation/contexts/auth-context';
 import { useBoardMembersViewModel } from '@/presentation/viewmodels/use-board-members-viewmodel';
+import { useTaskAttachmentsViewModel } from '@/presentation/viewmodels/use-task-attachments-viewmodel';
 import { useTaskCommentsViewModel } from '@/presentation/viewmodels/use-task-comments-viewmodel';
 import { useTaskDetailViewModel } from '@/presentation/viewmodels/use-task-detail-viewmodel';
 import { confirmAction } from '@/shared/utils/confirm';
@@ -48,6 +50,17 @@ export function TaskDetailScreen({ boardId, taskId }: Props) {
     reload: reloadComments,
   } = useTaskCommentsViewModel(taskId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const {
+    attachments,
+    isLoading: isLoadingAttachments,
+    error: attachmentsError,
+    isCapturing,
+    captureError,
+    deletingId: deletingAttachmentId,
+    deleteError: deleteAttachmentError,
+    captureAttachment,
+    deleteAttachment,
+  } = useTaskAttachmentsViewModel(taskId);
 
   const handleDelete = async () => {
     const confirmed = await confirmAction({
@@ -78,6 +91,17 @@ export function TaskDetailScreen({ boardId, taskId }: Props) {
       await saveCommentEdit();
     } catch {
     }
+  };
+
+  const handleDeleteAttachment = async (id: string) => {
+    const confirmed = await confirmAction({
+      title: 'Borrar foto',
+      message: '¿Seguro que querés borrar esta foto adjunta?',
+      confirmLabel: 'Borrar',
+    });
+    if (!confirmed) return;
+
+    deleteAttachment(id).catch(() => {});
   };
 
   const handleDeleteComment = async (id: number) => {
@@ -147,6 +171,43 @@ export function TaskDetailScreen({ boardId, taskId }: Props) {
                   onPress={handleDelete}
                   backgroundColor="$danger"
                 />
+              </YStack>
+
+              <YStack gap="$3" borderTopWidth={1} borderColor="$border" paddingTop="$4">
+                <Paragraph fontSize={18} fontWeight="700" color="$text">
+                  Fotos y ubicación
+                </Paragraph>
+
+                <AppButton
+                  label="Tomar foto"
+                  variant="outlined"
+                  loading={isCapturing}
+                  onPress={captureAttachment}
+                />
+
+                {captureError ? (
+                  <Paragraph color="$danger" fontSize={13}>
+                    {captureError}
+                  </Paragraph>
+                ) : null}
+
+                {deleteAttachmentError ? (
+                  <Paragraph color="$danger" fontSize={13}>
+                    {deleteAttachmentError}
+                  </Paragraph>
+                ) : null}
+
+                {isLoadingAttachments ? (
+                  <Spinner />
+                ) : attachmentsError ? (
+                  <Paragraph color="$danger">{attachmentsError}</Paragraph>
+                ) : (
+                  <TaskAttachmentList
+                    attachments={attachments}
+                    deletingId={deletingAttachmentId}
+                    onDelete={handleDeleteAttachment}
+                  />
+                )}
               </YStack>
 
               <YStack gap="$3" borderTopWidth={1} borderColor="$border" paddingTop="$4">
