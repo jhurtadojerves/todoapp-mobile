@@ -1,37 +1,48 @@
-export interface TaskStatusBrief {
-  id: number;
-  name: string;
-  color: string;
-}
+import { z } from 'zod';
 
-export interface TaskSprintBrief {
-  id: number;
-  name: string;
-}
+/** Generated model: the TS type and the runtime (de)serializer both derive from this one schema. */
+export const taskStatusBriefSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  color: z.string(),
+});
 
-export interface Task {
-  id: number;
-  board_id: number;
-  sprint: TaskSprintBrief | null;
-  status: TaskStatusBrief | null;
-  user_id: number;
-  assigned_to_id: number | null;
-  title: string;
-  description: string;
-  created: string;
-  modified: string;
-}
+export type TaskStatusBrief = z.infer<typeof taskStatusBriefSchema>;
+
+/** Generated model: the TS type and the runtime (de)serializer both derive from this one schema. */
+export const taskSprintBriefSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+});
+
+export type TaskSprintBrief = z.infer<typeof taskSprintBriefSchema>;
+
+/** Generated model: the TS type and the runtime (de)serializer both derive from this one schema. */
+export const taskSchema = z.object({
+  id: z.number(),
+  boardId: z.number(),
+  sprint: taskSprintBriefSchema.nullable(),
+  status: taskStatusBriefSchema.nullable(),
+  userId: z.number(),
+  assignedToId: z.number().nullable(),
+  title: z.string(),
+  description: z.string(),
+  created: z.string(),
+  modified: z.string(),
+});
+
+export type Task = z.infer<typeof taskSchema>;
 
 export interface TaskInput {
   title: string;
   description: string;
-  status_id: number | null;
-  sprint_id: number | null;
-  assigned_to_id: number | null;
+  statusId: number | null;
+  sprintId: number | null;
+  assignedToId: number | null;
 }
 
 export interface TaskFilters {
   status?: number;
   sprint?: number;
-  assigned_to?: number;
+  assignedTo?: number;
 }

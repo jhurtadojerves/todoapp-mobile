@@ -1,19 +1,30 @@
-import { PasswordValidationResult, RegisterCredentials, RegisteredUser } from '@/domain/models/register';
-import { TokenPair, UserCredentials } from '@/domain/models/token';
-import { API_BASE_URL } from '@/shared/config/api';
-import { apiFetch } from '@/shared/api/http-client';
+import { isAxiosError } from 'axios';
 
-const VALIDATE_PASSWORD_ENDPOINT = `${API_BASE_URL}/api/v1/auth/password/validate/`;
+import { PasswordValidationResult, RegisterCredentials, RegisteredUser, registeredUserSchema } from '@/domain/models/register';
+import { TokenPair, UserCredentials, tokenPairSchema } from '@/domain/models/token';
+import { apiClient, apiFetch } from '@/shared/api/http-client';
+
+const VALIDATE_PASSWORD_PATH = '/api/v1/auth/password/validate/';
 
 export class AuthDataSource {
   requestToken(credentials: UserCredentials): Promise<TokenPair> {
-    return apiFetch<TokenPair>('/api/v1/auth/token/', { method: 'POST', body: credentials });
+    return apiFetch('/api/v1/auth/token/', {
+      method: 'POST',
+      body: credentials,
+      schema: tokenPairSchema,
+      authenticated: false,
+    });
   }
 
+  // The refresh endpoint may omit `refresh` from its body (rotation is
+  // disabled server-side), so this deliberately stays on a Partial<TokenPair>
+  // shape without schema validation rather than tokenPairSchema, which would
+  // reject that (valid) response as malformed.
   async refreshToken(refresh: string): Promise<TokenPair> {
     const data = await apiFetch<Partial<TokenPair>>('/api/v1/auth/token/refresh/', {
       method: 'POST',
       body: { refresh },
+      authenticated: false,
     });
     return {
       access: data.access ?? '',
@@ -22,33 +33,29 @@ export class AuthDataSource {
   }
 
   register(credentials: RegisterCredentials): Promise<RegisteredUser> {
-    const { username, email, password, first_name, last_name } = credentials;
-    return apiFetch<RegisteredUser>('/api/v1/users/register/', {
+    const { username, email, password, firstName, lastName } = credentials;
+    return apiFetch('/api/v1/users/register/', {
       method: 'POST',
-      body: { username, email, password, first_name, last_name },
+      body: { username, email, password, firstName, lastName },
+      schema: registeredUserSchema,
+      authenticated: false,
     });
   }
 
-  // Reports validation results rather than throwing, so it stays on raw fetch
-  // instead of apiFetch's throw-on-error contract.
+  // Reports validation results rather than throwing, so it stays on the raw
+  // apiClient instead of apiFetch's throw-on-error contract.
   async validatePassword(password: string): Promise<PasswordValidationResult> {
-    const response = await fetch(VALIDATE_PASSWORD_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    if (!response.ok) {
-      const result = await response.json();
-      const errors = result.password || ['Error al validar la contraseña'];
-      return {
-        is_valid: false,
-        errors: errors,
-      };
+    try {
+      await apiClient.post(VALIDATE_PASSWORD_PATH, { password }, { authenticated: false });
+      return { isValid: true, errors: [] };
+    } catch (error) {
+      if (isAxiosError(error) && error.response) {
+        const errors = (error.response.data as { password?: string[] })?.password ?? [
+          'Error al validar la contraseña',
+        ];
+        return { isValid: false, errors };
+      }
+      throw error;
     }
-
-    return {
-      is_valid: true,
-      errors: [],
-    };
   }
 }

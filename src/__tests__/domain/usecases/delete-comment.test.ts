@@ -16,12 +16,12 @@ describe('DeleteCommentUseCase', () => {
     useCase = new DeleteCommentUseCase(mockCommentRepository);
   });
 
-  it('should call commentRepository.deleteComment with the given token, task id and comment id', async () => {
+  it('should call commentRepository.deleteComment with the given task id and comment id', async () => {
     mockCommentRepository.deleteComment.mockResolvedValue(undefined);
 
-    await useCase.execute('valid-token', 1, 1);
+    await useCase.execute(1, 1);
 
-    expect(mockCommentRepository.deleteComment).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockCommentRepository.deleteComment).toHaveBeenCalledWith(1, 1);
   });
 
   it('should propagate errors thrown by the repository', async () => {
@@ -29,7 +29,7 @@ describe('DeleteCommentUseCase', () => {
       new Error('You do not have permission to perform this action.')
     );
 
-    await expect(useCase.execute('valid-token', 1, 1)).rejects.toThrow(
+    await expect(useCase.execute(1, 1)).rejects.toThrow(
       'You do not have permission to perform this action.'
     );
   });

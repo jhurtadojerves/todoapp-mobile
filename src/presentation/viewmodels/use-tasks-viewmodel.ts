@@ -4,7 +4,7 @@ import { dependencies } from '@/shared/di/dependencies';
 import { useCallback, useEffect, useState } from 'react';
 
 export function useTasksViewModel(boardId: number) {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -15,7 +15,7 @@ export function useTasksViewModel(boardId: number) {
 
   const loadPage = useCallback(
     (pageNumber: number, append: boolean) => {
-      if (!token) return;
+      if (!isAuthenticated) return;
 
       if (append) {
         setIsLoadingMore(true);
@@ -25,7 +25,7 @@ export function useTasksViewModel(boardId: number) {
       setError(null);
 
       return dependencies.getTasksUseCase
-        .execute(token, boardId, pageNumber, statusFilter !== undefined ? { status: statusFilter } : undefined)
+        .execute(boardId, pageNumber, statusFilter !== undefined ? { status: statusFilter } : undefined)
         .then((result) => {
           setTasks((prev) => (append ? [...prev, ...result.results] : result.results));
           setHasMore(Boolean(result.next));
@@ -42,7 +42,7 @@ export function useTasksViewModel(boardId: number) {
           }
         });
     },
-    [token, boardId, statusFilter]
+    [isAuthenticated, boardId, statusFilter]
   );
 
   useEffect(() => {

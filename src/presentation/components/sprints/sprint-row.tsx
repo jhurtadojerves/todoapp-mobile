@@ -107,9 +107,9 @@ export function SprintRow({
         <Paragraph fontWeight="700" color="$text" fontSize={15} numberOfLines={1}>
           {sprint.name}
         </Paragraph>
-        {sprint.start_date || sprint.end_date ? (
+        {sprint.startDate || sprint.endDate ? (
           <Paragraph color="$muted" fontSize={13}>
-            {sprint.start_date ?? '—'} → {sprint.end_date ?? '—'}
+            {sprint.startDate ?? '—'} → {sprint.endDate ?? '—'}
           </Paragraph>
         ) : null}
       </YStack>

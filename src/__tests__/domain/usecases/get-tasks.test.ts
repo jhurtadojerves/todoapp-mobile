@@ -13,11 +13,11 @@ const mockTaskRepository: jest.Mocked<TaskRepository> = {
 
 const task: Task = {
   id: 1,
-  board_id: 1,
+  boardId: 1,
   sprint: null,
   status: null,
-  user_id: 7,
-  assigned_to_id: null,
+  userId: 7,
+  assignedToId: null,
   title: 'Fix the bug',
   description: '',
   created: '2026-01-01T00:00:00Z',
@@ -33,18 +33,18 @@ describe('GetTasksUseCase', () => {
     useCase = new GetTasksUseCase(mockTaskRepository);
   });
 
-  it('should call taskRepository.fetchTasks with the given token, board id, page and filters', async () => {
+  it('should call taskRepository.fetchTasks with the given board id, page and filters', async () => {
     mockTaskRepository.fetchTasks.mockResolvedValue(page);
 
-    await useCase.execute('valid-token', 1, 1, { status: 2 });
+    await useCase.execute(1, 1, { status: 2 });
 
-    expect(mockTaskRepository.fetchTasks).toHaveBeenCalledWith('valid-token', 1, 1, { status: 2 });
+    expect(mockTaskRepository.fetchTasks).toHaveBeenCalledWith(1, 1, { status: 2 });
   });
 
   it('should return the paginated response from the repository', async () => {
     mockTaskRepository.fetchTasks.mockResolvedValue(page);
 
-    const result = await useCase.execute('valid-token', 1, 1);
+    const result = await useCase.execute(1, 1);
 
     expect(result).toEqual(page);
   });
@@ -52,6 +52,6 @@ describe('GetTasksUseCase', () => {
   it('should propagate errors thrown by the repository', async () => {
     mockTaskRepository.fetchTasks.mockRejectedValue(new Error('Token is expired.'));
 
-    await expect(useCase.execute('expired-token', 1, 1)).rejects.toThrow('Token is expired.');
+    await expect(useCase.execute(1, 1)).rejects.toThrow('Token is expired.');
   });
 });

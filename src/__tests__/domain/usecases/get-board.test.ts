@@ -14,7 +14,7 @@ const board: Board = {
   id: 1,
   name: 'Sprint board',
   description: '',
-  user_id: 7,
+  userId: 7,
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
 };
@@ -27,18 +27,18 @@ describe('GetBoardUseCase', () => {
     useCase = new GetBoardUseCase(mockBoardRepository);
   });
 
-  it('should call boardRepository.fetchBoard with the given token and id', async () => {
+  it('should call boardRepository.fetchBoard with the given id', async () => {
     mockBoardRepository.fetchBoard.mockResolvedValue(board);
 
-    await useCase.execute('valid-token', 1);
+    await useCase.execute(1);
 
-    expect(mockBoardRepository.fetchBoard).toHaveBeenCalledWith('valid-token', 1);
+    expect(mockBoardRepository.fetchBoard).toHaveBeenCalledWith(1);
   });
 
   it('should return the board from the repository', async () => {
     mockBoardRepository.fetchBoard.mockResolvedValue(board);
 
-    const result = await useCase.execute('valid-token', 1);
+    const result = await useCase.execute(1);
 
     expect(result).toEqual(board);
   });
@@ -46,6 +46,6 @@ describe('GetBoardUseCase', () => {
   it('should propagate errors thrown by the repository', async () => {
     mockBoardRepository.fetchBoard.mockRejectedValue(new Error('Not found.'));
 
-    await expect(useCase.execute('valid-token', 999)).rejects.toThrow('Not found.');
+    await expect(useCase.execute(999)).rejects.toThrow('Not found.');
   });
 });

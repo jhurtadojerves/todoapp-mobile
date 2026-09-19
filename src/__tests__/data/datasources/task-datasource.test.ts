@@ -1,25 +1,31 @@
+import MockAdapter from 'axios-mock-adapter';
+
 import { TaskDataSource } from '@/data/datasources/task-datasource';
 import { Task, TaskInput } from '@/domain/models/task';
 import { PaginatedResponse } from '@/domain/models/pagination';
+import { apiClient } from '@/shared/api/http-client';
+import { storage } from '@/shared/utils/storage';
+import { deepKeysToSnake } from '@/shared/utils/case-convert';
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+jest.mock('@/shared/utils/storage', () => ({
+  storage: {
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+    deleteItem: jest.fn(),
+  },
+}));
 
-function mockResponse(status: number, body: unknown): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: jest.fn().mockResolvedValue(body),
-  } as unknown as Response;
-}
+const apiMock = new MockAdapter(apiClient);
+
+const mockGetItem = storage.getItem as jest.Mock;
 
 const task: Task = {
   id: 1,
-  board_id: 1,
+  boardId: 1,
   sprint: null,
   status: null,
-  user_id: 7,
-  assigned_to_id: null,
+  userId: 7,
+  assignedToId: null,
   title: 'Fix the bug',
   description: 'Steps to reproduce...',
   created: '2026-01-01T00:00:00Z',
@@ -30,7 +36,9 @@ describe('TaskDataSource', () => {
   let dataSource: TaskDataSource;
 
   beforeEach(() => {
+    apiMock.reset();
     jest.clearAllMocks();
+    mockGetItem.mockResolvedValue(null);
     dataSource = new TaskDataSource();
   });
 
@@ -44,30 +52,27 @@ describe('TaskDataSource', () => {
         previous: null,
         results: [task],
       };
-      mockFetch.mockResolvedValue(mockResponse(200, paginated));
+      apiMock.onAny().reply(200, paginated);
 
-      const result = await dataSource.fetchTasks('valid-token', 1, 1);
+      const result = await dataSource.fetchTasks(1, 1);
 
       expect(result).toEqual(paginated);
     });
 
     it('should request the tasks endpoint with the page query param', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, { count: 0, next: null, previous: null, results: [] }));
+      apiMock.onAny().reply(200, { count: 0, next: null, previous: null, results: [] });
 
-      await dataSource.fetchTasks('valid-token', 1, 2);
+      await dataSource.fetchTasks(1, 2);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/1/tasks/?page=2'),
-        expect.objectContaining({ headers: { Authorization: 'Bearer valid-token' } })
-      );
+      expect(apiMock.history.get[0].url).toContain('/boards/1/tasks/?page=2');
     });
 
     it('should append status/sprint/assigned_to filters when provided', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, { count: 0, next: null, previous: null, results: [] }));
+      apiMock.onAny().reply(200, { count: 0, next: null, previous: null, results: [] });
 
-      await dataSource.fetchTasks('valid-token', 1, 1, { status: 5, sprint: 9, assigned_to: 3 });
+      await dataSource.fetchTasks(1, 1, { status: 5, sprint: 9, assignedTo: 3 });
 
-      const [calledUrl] = mockFetch.mock.calls[0];
+      const calledUrl = apiMock.history.get[0].url;
       expect(calledUrl).toContain('page=1');
       expect(calledUrl).toContain('status=5');
       expect(calledUrl).toContain('sprint=9');
@@ -75,10 +80,10 @@ describe('TaskDataSource', () => {
     });
 
     it('should throw a default message when the request fails', async () => {
-      mockFetch.mockResolvedValue(mockResponse(500, {}));
+      apiMock.onAny().reply(500, {});
 
-      await expect(dataSource.fetchTasks('valid-token', 1, 1)).rejects.toThrow(
-        'Ocurrió un error inesperado. Intentá de nuevo.'
+      await expect(dataSource.fetchTasks(1, 1)).rejects.toThrow(
+        'El servidor tuvo un problema. Intentá de nuevo en unos minutos.'
       );
     });
   });
@@ -87,28 +92,25 @@ describe('TaskDataSource', () => {
 
   describe('fetchTask', () => {
     it('should return the task on success', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, task));
+      apiMock.onAny().reply(200, task);
 
-      const result = await dataSource.fetchTask('valid-token', 1);
+      const result = await dataSource.fetchTask(1);
 
       expect(result).toEqual(task);
     });
 
     it('should request the task detail endpoint', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, task));
+      apiMock.onAny().reply(200, task);
 
-      await dataSource.fetchTask('valid-token', 1);
+      await dataSource.fetchTask(1);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tasks/1/'),
-        expect.objectContaining({ headers: { Authorization: 'Bearer valid-token' } })
-      );
+      expect(apiMock.history.get[0].url).toContain('/tasks/1/');
     });
 
     it('should throw when the task does not exist', async () => {
-      mockFetch.mockResolvedValue(mockResponse(404, {}));
+      apiMock.onAny().reply(404, {});
 
-      await expect(dataSource.fetchTask('valid-token', 999)).rejects.toThrow(
+      await expect(dataSource.fetchTask(999)).rejects.toThrow(
         'No existe o no tenés acceso a este recurso.'
       );
     });
@@ -120,38 +122,34 @@ describe('TaskDataSource', () => {
     const input: TaskInput = {
       title: 'New task',
       description: '',
-      status_id: null,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: null,
+      sprintId: null,
+      assignedToId: null,
     };
 
     it('should return the created task', async () => {
-      mockFetch.mockResolvedValue(mockResponse(201, task));
+      apiMock.onAny().reply(201, task);
 
-      const result = await dataSource.createTask('valid-token', 1, input);
+      const result = await dataSource.createTask(1, input);
 
       expect(result).toEqual(task);
     });
 
     it('should send a POST request with the task input', async () => {
-      mockFetch.mockResolvedValue(mockResponse(201, task));
+      apiMock.onAny().reply(201, task);
 
-      await dataSource.createTask('valid-token', 1, input);
+      await dataSource.createTask(1, input);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/1/tasks/'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid-token' },
-          body: JSON.stringify(input),
-        })
-      );
+      const request = apiMock.history.post[0];
+      expect(request.url).toContain('/boards/1/tasks/');
+      expect(request.headers?.['Content-Type']).toContain('application/json');
+      expect(request.data).toBe(JSON.stringify(deepKeysToSnake(input)));
     });
 
     it('should throw with the field error message when present', async () => {
-      mockFetch.mockResolvedValue(mockResponse(400, { title: ['This field may not be blank.'] }));
+      apiMock.onAny().reply(400, { title: ['This field may not be blank.'] });
 
-      await expect(dataSource.createTask('valid-token', 1, input)).rejects.toThrow(
+      await expect(dataSource.createTask(1, input)).rejects.toThrow(
         'This field may not be blank.'
       );
     });
@@ -163,36 +161,33 @@ describe('TaskDataSource', () => {
     const input: TaskInput = {
       title: 'Updated title',
       description: 'Updated description',
-      status_id: 2,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: 2,
+      sprintId: null,
+      assignedToId: null,
     };
 
     it('should return the updated task', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, { ...task, title: 'Updated title' }));
+      apiMock.onAny().reply(200, { ...task, title: 'Updated title' });
 
-      const result = await dataSource.updateTask('valid-token', 1, input);
+      const result = await dataSource.updateTask(1, input);
 
       expect(result).toEqual({ ...task, title: 'Updated title' });
     });
 
     it('should send a PATCH request to the task detail endpoint', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, task));
+      apiMock.onAny().reply(200, task);
 
-      await dataSource.updateTask('valid-token', 1, input);
+      await dataSource.updateTask(1, input);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tasks/1/'),
-        expect.objectContaining({ method: 'PATCH', body: JSON.stringify(input) })
-      );
+      const request = apiMock.history.patch[0];
+      expect(request.url).toContain('/tasks/1/');
+      expect(request.data).toBe(JSON.stringify(deepKeysToSnake(input)));
     });
 
     it('should throw a permission error when the user cannot update the task', async () => {
-      mockFetch.mockResolvedValue(
-        mockResponse(403, { detail: 'You do not have permission to perform this action.' })
-      );
+      apiMock.onAny().reply(403, { detail: 'You do not have permission to perform this action.' });
 
-      await expect(dataSource.updateTask('valid-token', 1, input)).rejects.toThrow(
+      await expect(dataSource.updateTask(1, input)).rejects.toThrow(
         'You do not have permission to perform this action.'
       );
     });
@@ -202,20 +197,17 @@ describe('TaskDataSource', () => {
 
   describe('deleteTask', () => {
     it('should resolve when the deletion succeeds', async () => {
-      mockFetch.mockResolvedValue(mockResponse(204, null));
+      apiMock.onAny().reply(204);
 
-      await expect(dataSource.deleteTask('valid-token', 1)).resolves.toBeUndefined();
+      await expect(dataSource.deleteTask(1)).resolves.toBeUndefined();
     });
 
     it('should send a DELETE request to the task detail endpoint', async () => {
-      mockFetch.mockResolvedValue(mockResponse(204, null));
+      apiMock.onAny().reply(204);
 
-      await dataSource.deleteTask('valid-token', 1);
+      await dataSource.deleteTask(1);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tasks/1/'),
-        expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer valid-token' } })
-      );
+      expect(apiMock.history.delete[0].url).toContain('/tasks/1/');
     });
   });
 });

@@ -4,7 +4,7 @@ import { dependencies } from '@/shared/di/dependencies';
 import { useEffect, useState } from 'react';
 
 export function useBoardFormViewModel(boardId?: number) {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const isEditing = boardId !== undefined;
   const [fields, setFields] = useState<BoardInput>({ name: '', description: '' });
   const [isLoading, setIsLoading] = useState(isEditing);
@@ -13,7 +13,7 @@ export function useBoardFormViewModel(boardId?: number) {
   const [nameError, setNameError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token || boardId === undefined) {
+    if (!isAuthenticated || boardId === undefined) {
       return;
     }
 
@@ -21,7 +21,7 @@ export function useBoardFormViewModel(boardId?: number) {
     setIsLoading(true);
 
     dependencies.getBoardUseCase
-      .execute(token, boardId)
+      .execute(boardId)
       .then((board) => {
         if (isMounted) {
           setFields({ name: board.name, description: board.description });
@@ -41,7 +41,7 @@ export function useBoardFormViewModel(boardId?: number) {
     return () => {
       isMounted = false;
     };
-  }, [token, boardId]);
+  }, [isAuthenticated, boardId]);
 
   const setField = (field: keyof BoardInput, value: string) => {
     setFields((prev) => ({ ...prev, [field]: value }));
@@ -58,16 +58,16 @@ export function useBoardFormViewModel(boardId?: number) {
       throw new Error('El nombre es obligatorio');
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setIsSubmitting(true);
     try {
       if (isEditing) {
-        await dependencies.updateBoardUseCase.execute(token, boardId, fields);
+        await dependencies.updateBoardUseCase.execute(boardId, fields);
       } else {
-        await dependencies.createBoardUseCase.execute(token, fields);
+        await dependencies.createBoardUseCase.execute(fields);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo guardar el tablero.';

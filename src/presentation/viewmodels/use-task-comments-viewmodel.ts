@@ -4,7 +4,7 @@ import { dependencies } from '@/shared/di/dependencies';
 import { useCallback, useEffect, useState } from 'react';
 
 export function useTaskCommentsViewModel(taskId: number) {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -26,7 +26,7 @@ export function useTaskCommentsViewModel(taskId: number) {
 
   const loadPage = useCallback(
     (pageNumber: number, append: boolean) => {
-      if (!token) return;
+      if (!isAuthenticated) return;
 
       if (append) {
         setIsLoadingMore(true);
@@ -36,7 +36,7 @@ export function useTaskCommentsViewModel(taskId: number) {
       setError(null);
 
       return dependencies.getCommentsUseCase
-        .execute(token, taskId, pageNumber)
+        .execute(taskId, pageNumber)
         .then((result) => {
           setComments((prev) => (append ? [...prev, ...result.results] : result.results));
           setHasMore(Boolean(result.next));
@@ -53,7 +53,7 @@ export function useTaskCommentsViewModel(taskId: number) {
           }
         });
     },
-    [token, taskId]
+    [isAuthenticated, taskId]
   );
 
   useEffect(() => {
@@ -74,13 +74,13 @@ export function useTaskCommentsViewModel(taskId: number) {
       throw new Error('El comentario no puede estar vacío');
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setIsCreating(true);
     try {
-      await dependencies.createCommentUseCase.execute(token, taskId, { content: newContent.trim() });
+      await dependencies.createCommentUseCase.execute(taskId, { content: newContent.trim() });
       setNewContent('');
       await loadPage(1, false);
     } catch (err) {
@@ -113,13 +113,13 @@ export function useTaskCommentsViewModel(taskId: number) {
       throw new Error('El comentario no puede estar vacío');
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setIsSavingEdit(true);
     try {
-      await dependencies.updateCommentUseCase.execute(token, taskId, editingId, {
+      await dependencies.updateCommentUseCase.execute(taskId, editingId, {
         content: editContent.trim(),
       });
       cancelEdit();
@@ -134,14 +134,14 @@ export function useTaskCommentsViewModel(taskId: number) {
   };
 
   const deleteComment = async (id: number): Promise<void> => {
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setDeletingId(id);
     setDeleteError(null);
     try {
-      await dependencies.deleteCommentUseCase.execute(token, taskId, id);
+      await dependencies.deleteCommentUseCase.execute(taskId, id);
       await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo eliminar el comentario.';

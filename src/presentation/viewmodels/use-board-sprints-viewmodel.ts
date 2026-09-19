@@ -14,7 +14,7 @@ function isValidDate(value: string): boolean {
 }
 
 export function useBoardSprintsViewModel(boardId: number) {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [sprints, setSprints] = useState<Sprint[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -40,7 +40,7 @@ export function useBoardSprintsViewModel(boardId: number) {
 
   const loadPage = useCallback(
     (pageNumber: number, append: boolean) => {
-      if (!token) return;
+      if (!isAuthenticated) return;
 
       if (append) {
         setIsLoadingMore(true);
@@ -50,7 +50,7 @@ export function useBoardSprintsViewModel(boardId: number) {
       setError(null);
 
       return dependencies.getSprintsUseCase
-        .execute(token, boardId, pageNumber)
+        .execute(boardId, pageNumber)
         .then((result) => {
           setSprints((prev) => (append ? [...prev, ...result.results] : result.results));
           setHasMore(Boolean(result.next));
@@ -67,7 +67,7 @@ export function useBoardSprintsViewModel(boardId: number) {
           }
         });
     },
-    [token, boardId]
+    [isAuthenticated, boardId]
   );
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export function useBoardSprintsViewModel(boardId: number) {
       throw new Error('Las fechas deben tener el formato AAAA-MM-DD');
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
@@ -101,10 +101,10 @@ export function useBoardSprintsViewModel(boardId: number) {
     try {
       const input: SprintInput = {
         name: newName.trim(),
-        start_date: normalizeDate(newStartDate),
-        end_date: normalizeDate(newEndDate),
+        startDate: normalizeDate(newStartDate),
+        endDate: normalizeDate(newEndDate),
       };
-      await dependencies.createSprintUseCase.execute(token, boardId, input);
+      await dependencies.createSprintUseCase.execute(boardId, input);
       setNewName('');
       setNewStartDate('');
       setNewEndDate('');
@@ -121,8 +121,8 @@ export function useBoardSprintsViewModel(boardId: number) {
   const startEdit = (sprint: Sprint) => {
     setEditingId(sprint.id);
     setEditName(sprint.name);
-    setEditStartDate(sprint.start_date ?? '');
-    setEditEndDate(sprint.end_date ?? '');
+    setEditStartDate(sprint.startDate ?? '');
+    setEditEndDate(sprint.endDate ?? '');
     setEditError(null);
   };
 
@@ -148,7 +148,7 @@ export function useBoardSprintsViewModel(boardId: number) {
       throw new Error('Las fechas deben tener el formato AAAA-MM-DD');
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
@@ -156,10 +156,10 @@ export function useBoardSprintsViewModel(boardId: number) {
     try {
       const input: SprintInput = {
         name: editName.trim(),
-        start_date: normalizeDate(editStartDate),
-        end_date: normalizeDate(editEndDate),
+        startDate: normalizeDate(editStartDate),
+        endDate: normalizeDate(editEndDate),
       };
-      await dependencies.updateSprintUseCase.execute(token, boardId, editingId, input);
+      await dependencies.updateSprintUseCase.execute(boardId, editingId, input);
       cancelEdit();
       await loadPage(1, false);
     } catch (err) {
@@ -172,14 +172,14 @@ export function useBoardSprintsViewModel(boardId: number) {
   };
 
   const deleteSprint = async (id: number): Promise<void> => {
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setDeletingId(id);
     setDeleteError(null);
     try {
-      await dependencies.deleteSprintUseCase.execute(token, boardId, id);
+      await dependencies.deleteSprintUseCase.execute(boardId, id);
       await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo eliminar el sprint.';

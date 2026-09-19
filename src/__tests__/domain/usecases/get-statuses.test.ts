@@ -21,18 +21,18 @@ describe('GetStatusesUseCase', () => {
     useCase = new GetStatusesUseCase(mockStatusRepository);
   });
 
-  it('should call statusRepository.fetchStatuses with the given token, board id and page', async () => {
+  it('should call statusRepository.fetchStatuses with the given board id and page', async () => {
     mockStatusRepository.fetchStatuses.mockResolvedValue(page);
 
-    await useCase.execute('valid-token', 1, 1);
+    await useCase.execute(1, 1);
 
-    expect(mockStatusRepository.fetchStatuses).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockStatusRepository.fetchStatuses).toHaveBeenCalledWith(1, 1);
   });
 
   it('should return the paginated response from the repository', async () => {
     mockStatusRepository.fetchStatuses.mockResolvedValue(page);
 
-    const result = await useCase.execute('valid-token', 1, 1);
+    const result = await useCase.execute(1, 1);
 
     expect(result).toEqual(page);
   });
@@ -40,6 +40,6 @@ describe('GetStatusesUseCase', () => {
   it('should propagate errors thrown by the repository', async () => {
     mockStatusRepository.fetchStatuses.mockRejectedValue(new Error('Token is expired.'));
 
-    await expect(useCase.execute('expired-token', 1, 1)).rejects.toThrow('Token is expired.');
+    await expect(useCase.execute(1, 1)).rejects.toThrow('Token is expired.');
   });
 });

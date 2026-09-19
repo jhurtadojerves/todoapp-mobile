@@ -14,7 +14,7 @@ const board: Board = {
   id: 1,
   name: 'New board',
   description: 'A description',
-  user_id: 7,
+  userId: 7,
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
 };
@@ -27,20 +27,20 @@ describe('CreateBoardUseCase', () => {
     useCase = new CreateBoardUseCase(mockBoardRepository);
   });
 
-  it('should call boardRepository.createBoard with the given token and input', async () => {
+  it('should call boardRepository.createBoard with the given input', async () => {
     const input: BoardInput = { name: 'New board', description: 'A description' };
     mockBoardRepository.createBoard.mockResolvedValue(board);
 
-    await useCase.execute('valid-token', input);
+    await useCase.execute(input);
 
-    expect(mockBoardRepository.createBoard).toHaveBeenCalledWith('valid-token', input);
+    expect(mockBoardRepository.createBoard).toHaveBeenCalledWith(input);
   });
 
   it('should return the created board from the repository', async () => {
     const input: BoardInput = { name: 'New board', description: 'A description' };
     mockBoardRepository.createBoard.mockResolvedValue(board);
 
-    const result = await useCase.execute('valid-token', input);
+    const result = await useCase.execute(input);
 
     expect(result).toEqual(board);
   });
@@ -49,7 +49,7 @@ describe('CreateBoardUseCase', () => {
     const input: BoardInput = { name: '', description: '' };
     mockBoardRepository.createBoard.mockRejectedValue(new Error('This field may not be blank.'));
 
-    await expect(useCase.execute('valid-token', input)).rejects.toThrow(
+    await expect(useCase.execute(input)).rejects.toThrow(
       'This field may not be blank.'
     );
   });

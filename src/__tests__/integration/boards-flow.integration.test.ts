@@ -2,6 +2,8 @@
  * Integration tests: Board usecases → BoardRepositoryImpl → BoardDataSource
  * Only `fetch` is mocked (the real external boundary).
  */
+import MockAdapter from 'axios-mock-adapter';
+
 import { BoardDataSource } from '@/data/datasources/board-datasource';
 import { BoardRepositoryImpl } from '@/data/repositories/board-repository-impl';
 import { CreateBoardUseCase } from '@/domain/usecases/create-board';
@@ -10,17 +12,9 @@ import { GetBoardUseCase } from '@/domain/usecases/get-board';
 import { GetBoardsUseCase } from '@/domain/usecases/get-boards';
 import { UpdateBoardUseCase } from '@/domain/usecases/update-board';
 import { Board } from '@/domain/models/board';
+import { apiClient } from '@/shared/api/http-client';
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
-
-function mockResponse(status: number, body: unknown): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: jest.fn().mockResolvedValue(body),
-  } as unknown as Response;
-}
+const apiMock = new MockAdapter(apiClient);
 
 function buildDependencies() {
   const dataSource = new BoardDataSource();
@@ -38,30 +32,31 @@ const board: Board = {
   id: 1,
   name: 'Sprint board',
   description: 'Board for the current sprint',
-  user_id: 7,
+  userId: 7,
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
 };
 
 describe('Boards CRUD flow (integration)', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    apiMock.reset();
+    jest.clearAllMocks();
+  });
 
   it('should list boards from a paginated response', async () => {
     const { getBoardsUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(
-      mockResponse(200, { count: 1, next: null, previous: null, results: [board] })
-    );
+    apiMock.onAny().reply(200, { count: 1, next: null, previous: null, results: [board] });
 
-    const result = await getBoardsUseCase.execute('valid-token', 1);
+    const result = await getBoardsUseCase.execute(1);
 
     expect(result.results).toEqual([board]);
   });
 
   it('should create a board and return it', async () => {
     const { createBoardUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(201, board));
+    apiMock.onAny().reply(201, board);
 
-    const result = await createBoardUseCase.execute('valid-token', {
+    const result = await createBoardUseCase.execute({
       name: board.name,
       description: board.description,
     });
@@ -71,9 +66,9 @@ describe('Boards CRUD flow (integration)', () => {
 
   it('should fetch a single board by id', async () => {
     const { getBoardUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(200, board));
+    apiMock.onAny().reply(200, board);
 
-    const result = await getBoardUseCase.execute('valid-token', 1);
+    const result = await getBoardUseCase.execute(1);
 
     expect(result).toEqual(board);
   });
@@ -81,9 +76,9 @@ describe('Boards CRUD flow (integration)', () => {
   it('should update a board', async () => {
     const { updateBoardUseCase } = buildDependencies();
     const updated = { ...board, name: 'Renamed board' };
-    mockFetch.mockResolvedValue(mockResponse(200, updated));
+    apiMock.onAny().reply(200, updated);
 
-    const result = await updateBoardUseCase.execute('valid-token', 1, {
+    const result = await updateBoardUseCase.execute(1, {
       name: 'Renamed board',
       description: board.description,
     });
@@ -93,19 +88,17 @@ describe('Boards CRUD flow (integration)', () => {
 
   it('should delete a board', async () => {
     const { deleteBoardUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(204, null));
+    apiMock.onAny().reply(204);
 
-    await expect(deleteBoardUseCase.execute('valid-token', 1)).resolves.toBeUndefined();
+    await expect(deleteBoardUseCase.execute(1)).resolves.toBeUndefined();
   });
 
   it('should surface a 403 as a permission error when updating a board owned by someone else', async () => {
     const { updateBoardUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(
-      mockResponse(403, { detail: 'You do not have permission to perform this action.' })
-    );
+    apiMock.onAny().reply(403, { detail: 'You do not have permission to perform this action.' });
 
     await expect(
-      updateBoardUseCase.execute('valid-token', 1, { name: 'X', description: '' })
+      updateBoardUseCase.execute(1, { name: 'X', description: '' })
     ).rejects.toThrow('You do not have permission to perform this action.');
   });
 });

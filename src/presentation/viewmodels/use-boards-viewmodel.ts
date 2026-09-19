@@ -4,7 +4,7 @@ import { dependencies } from '@/shared/di/dependencies';
 import { useCallback, useEffect, useState } from 'react';
 
 export function useBoardsViewModel() {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [boards, setBoards] = useState<Board[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -14,7 +14,7 @@ export function useBoardsViewModel() {
 
   const loadPage = useCallback(
     (pageNumber: number, append: boolean) => {
-      if (!token) {
+      if (!isAuthenticated) {
         setBoards([]);
         return;
       }
@@ -27,7 +27,7 @@ export function useBoardsViewModel() {
       setError(null);
 
       return dependencies.getBoardsUseCase
-        .execute(token, pageNumber)
+        .execute(pageNumber)
         .then((result) => {
           setBoards((prev) => (append ? [...prev, ...result.results] : result.results));
           setHasMore(Boolean(result.next));
@@ -44,7 +44,7 @@ export function useBoardsViewModel() {
           }
         });
     },
-    [token]
+    [isAuthenticated]
   );
 
   useEffect(() => {

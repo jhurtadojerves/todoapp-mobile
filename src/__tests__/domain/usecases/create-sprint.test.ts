@@ -12,8 +12,8 @@ const mockSprintRepository: jest.Mocked<SprintRepository> = {
 const sprint: Sprint = {
   id: 1,
   name: 'Sprint 1',
-  start_date: '2026-01-01',
-  end_date: '2026-01-14',
+  startDate: '2026-01-01',
+  endDate: '2026-01-14',
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
 };
@@ -26,29 +26,29 @@ describe('CreateSprintUseCase', () => {
     useCase = new CreateSprintUseCase(mockSprintRepository);
   });
 
-  it('should call sprintRepository.createSprint with the given token, board id and input', async () => {
-    const input: SprintInput = { name: 'Sprint 1', start_date: '2026-01-01', end_date: '2026-01-14' };
+  it('should call sprintRepository.createSprint with the given board id and input', async () => {
+    const input: SprintInput = { name: 'Sprint 1', startDate: '2026-01-01', endDate: '2026-01-14' };
     mockSprintRepository.createSprint.mockResolvedValue(sprint);
 
-    await useCase.execute('valid-token', 1, input);
+    await useCase.execute(1, input);
 
-    expect(mockSprintRepository.createSprint).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockSprintRepository.createSprint).toHaveBeenCalledWith(1, input);
   });
 
   it('should return the created sprint from the repository', async () => {
-    const input: SprintInput = { name: 'Sprint 1', start_date: '2026-01-01', end_date: '2026-01-14' };
+    const input: SprintInput = { name: 'Sprint 1', startDate: '2026-01-01', endDate: '2026-01-14' };
     mockSprintRepository.createSprint.mockResolvedValue(sprint);
 
-    const result = await useCase.execute('valid-token', 1, input);
+    const result = await useCase.execute(1, input);
 
     expect(result).toEqual(sprint);
   });
 
   it('should propagate errors thrown by the repository', async () => {
-    const input: SprintInput = { name: '', start_date: null, end_date: null };
+    const input: SprintInput = { name: '', startDate: null, endDate: null };
     mockSprintRepository.createSprint.mockRejectedValue(new Error('This field may not be blank.'));
 
-    await expect(useCase.execute('valid-token', 1, input)).rejects.toThrow(
+    await expect(useCase.execute(1, input)).rejects.toThrow(
       'This field may not be blank.'
     );
   });

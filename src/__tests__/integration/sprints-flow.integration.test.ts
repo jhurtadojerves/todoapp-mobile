@@ -2,6 +2,8 @@
  * Integration tests: Sprint usecases → SprintRepositoryImpl → SprintDataSource
  * Only `fetch` is mocked (the real external boundary).
  */
+import MockAdapter from 'axios-mock-adapter';
+
 import { SprintDataSource } from '@/data/datasources/sprint-datasource';
 import { SprintRepositoryImpl } from '@/data/repositories/sprint-repository-impl';
 import { CreateSprintUseCase } from '@/domain/usecases/create-sprint';
@@ -9,17 +11,9 @@ import { DeleteSprintUseCase } from '@/domain/usecases/delete-sprint';
 import { GetSprintsUseCase } from '@/domain/usecases/get-sprints';
 import { UpdateSprintUseCase } from '@/domain/usecases/update-sprint';
 import { Sprint } from '@/domain/models/sprint';
+import { apiClient } from '@/shared/api/http-client';
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
-
-function mockResponse(status: number, body: unknown): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: jest.fn().mockResolvedValue(body),
-  } as unknown as Response;
-}
+const apiMock = new MockAdapter(apiClient);
 
 function buildDependencies() {
   const dataSource = new SprintDataSource();
@@ -35,8 +29,8 @@ function buildDependencies() {
 const sprint1: Sprint = {
   id: 1,
   name: 'Sprint 1',
-  start_date: '2026-01-01',
-  end_date: '2026-01-14',
+  startDate: '2026-01-01',
+  endDate: '2026-01-14',
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
 };
@@ -44,34 +38,35 @@ const sprint1: Sprint = {
 const sprint2: Sprint = {
   id: 2,
   name: 'Sprint 2',
-  start_date: null,
-  end_date: null,
+  startDate: null,
+  endDate: null,
   created: '2026-01-15T00:00:00Z',
   modified: '2026-01-15T00:00:00Z',
 };
 
 describe('Board sprints flow (integration)', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    apiMock.reset();
+    jest.clearAllMocks();
+  });
 
   it('should list sprints from a paginated response', async () => {
     const { getSprintsUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(
-      mockResponse(200, { count: 2, next: null, previous: null, results: [sprint1, sprint2] })
-    );
+    apiMock.onAny().reply(200, { count: 2, next: null, previous: null, results: [sprint1, sprint2] });
 
-    const result = await getSprintsUseCase.execute('valid-token', 1, 1);
+    const result = await getSprintsUseCase.execute(1, 1);
 
     expect(result.results).toEqual([sprint1, sprint2]);
   });
 
   it('should create a sprint without dates and return it', async () => {
     const { createSprintUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(201, sprint2));
+    apiMock.onAny().reply(201, sprint2);
 
-    const result = await createSprintUseCase.execute('valid-token', 1, {
+    const result = await createSprintUseCase.execute(1, {
       name: 'Sprint 2',
-      start_date: null,
-      end_date: null,
+      startDate: null,
+      endDate: null,
     });
 
     expect(result).toEqual(sprint2);
@@ -80,12 +75,12 @@ describe('Board sprints flow (integration)', () => {
   it('should update a sprint', async () => {
     const { updateSprintUseCase } = buildDependencies();
     const renamed = { ...sprint1, name: 'Sprint 1 (extended)' };
-    mockFetch.mockResolvedValue(mockResponse(200, renamed));
+    apiMock.onAny().reply(200, renamed);
 
-    const result = await updateSprintUseCase.execute('valid-token', 1, 1, {
+    const result = await updateSprintUseCase.execute(1, 1, {
       name: 'Sprint 1 (extended)',
-      start_date: sprint1.start_date,
-      end_date: sprint1.end_date,
+      startDate: sprint1.startDate,
+      endDate: sprint1.endDate,
     });
 
     expect(result).toEqual(renamed);
@@ -93,19 +88,17 @@ describe('Board sprints flow (integration)', () => {
 
   it('should delete a sprint', async () => {
     const { deleteSprintUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(204, null));
+    apiMock.onAny().reply(204);
 
-    await expect(deleteSprintUseCase.execute('valid-token', 1, 1)).resolves.toBeUndefined();
+    await expect(deleteSprintUseCase.execute(1, 1)).resolves.toBeUndefined();
   });
 
   it('should surface a 403 as a permission error when a non-owner tries to create a sprint', async () => {
     const { createSprintUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(
-      mockResponse(403, { detail: 'You do not have permission to perform this action.' })
-    );
+    apiMock.onAny().reply(403, { detail: 'You do not have permission to perform this action.' });
 
     await expect(
-      createSprintUseCase.execute('valid-token', 1, { name: 'X', start_date: null, end_date: null })
+      createSprintUseCase.execute(1, { name: 'X', startDate: null, endDate: null })
     ).rejects.toThrow('You do not have permission to perform this action.');
   });
 });

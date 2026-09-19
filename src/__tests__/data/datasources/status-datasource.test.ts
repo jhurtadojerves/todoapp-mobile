@@ -1,17 +1,22 @@
+import MockAdapter from 'axios-mock-adapter';
+
 import { StatusDataSource } from '@/data/datasources/status-datasource';
 import { BoardStatus, BoardStatusInput } from '@/domain/models/status';
 import { PaginatedResponse } from '@/domain/models/pagination';
+import { apiClient } from '@/shared/api/http-client';
+import { storage } from '@/shared/utils/storage';
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+jest.mock('@/shared/utils/storage', () => ({
+  storage: {
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+    deleteItem: jest.fn(),
+  },
+}));
 
-function mockResponse(status: number, body: unknown): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: jest.fn().mockResolvedValue(body),
-  } as unknown as Response;
-}
+const apiMock = new MockAdapter(apiClient);
+
+const mockGetItem = storage.getItem as jest.Mock;
 
 const boardStatus: BoardStatus = { id: 1, name: 'To Do', order: 0, color: '#64748b' };
 
@@ -19,7 +24,9 @@ describe('StatusDataSource', () => {
   let dataSource: StatusDataSource;
 
   beforeEach(() => {
+    apiMock.reset();
     jest.clearAllMocks();
+    mockGetItem.mockResolvedValue(null);
     dataSource = new StatusDataSource();
   });
 
@@ -33,31 +40,26 @@ describe('StatusDataSource', () => {
         previous: null,
         results: [boardStatus],
       };
-      mockFetch.mockResolvedValue(mockResponse(200, paginated));
+      apiMock.onAny().reply(200, paginated);
 
-      const result = await dataSource.fetchStatuses('valid-token', 1, 1);
+      const result = await dataSource.fetchStatuses(1, 1);
 
       expect(result).toEqual(paginated);
     });
 
     it('should request the statuses endpoint with the page query param', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, { count: 0, next: null, previous: null, results: [] }));
+      apiMock.onAny().reply(200, { count: 0, next: null, previous: null, results: [] });
 
-      await dataSource.fetchStatuses('valid-token', 1, 2);
+      await dataSource.fetchStatuses(1, 2);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/1/statuses/?page=2'),
-        expect.objectContaining({
-          headers: { Authorization: 'Bearer valid-token' },
-        })
-      );
+      expect(apiMock.history.get[0].url).toContain('/boards/1/statuses/?page=2');
     });
 
     it('should throw a default message when no detail is provided', async () => {
-      mockFetch.mockResolvedValue(mockResponse(500, {}));
+      apiMock.onAny().reply(500, {});
 
-      await expect(dataSource.fetchStatuses('valid-token', 1, 1)).rejects.toThrow(
-        'Ocurrió un error inesperado. Intentá de nuevo.'
+      await expect(dataSource.fetchStatuses(1, 1)).rejects.toThrow(
+        'El servidor tuvo un problema. Intentá de nuevo en unos minutos.'
       );
     });
   });
@@ -68,35 +70,28 @@ describe('StatusDataSource', () => {
     const input: BoardStatusInput = { name: 'To Do', order: 0, color: '#64748b' };
 
     it('should return the created status', async () => {
-      mockFetch.mockResolvedValue(mockResponse(201, boardStatus));
+      apiMock.onAny().reply(201, boardStatus);
 
-      const result = await dataSource.createStatus('valid-token', 1, input);
+      const result = await dataSource.createStatus(1, input);
 
       expect(result).toEqual(boardStatus);
     });
 
     it('should send a POST request with the status input', async () => {
-      mockFetch.mockResolvedValue(mockResponse(201, boardStatus));
+      apiMock.onAny().reply(201, boardStatus);
 
-      await dataSource.createStatus('valid-token', 1, input);
+      await dataSource.createStatus(1, input);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/1/statuses/'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer valid-token',
-          },
-          body: JSON.stringify(input),
-        })
-      );
+      const request = apiMock.history.post[0];
+      expect(request.url).toContain('/boards/1/statuses/');
+      expect(request.headers?.['Content-Type']).toContain('application/json');
+      expect(request.data).toBe(JSON.stringify(input));
     });
 
     it('should throw with the field error message when present', async () => {
-      mockFetch.mockResolvedValue(mockResponse(400, { name: ['This field may not be blank.'] }));
+      apiMock.onAny().reply(400, { name: ['This field may not be blank.'] });
 
-      await expect(dataSource.createStatus('valid-token', 1, input)).rejects.toThrow(
+      await expect(dataSource.createStatus(1, input)).rejects.toThrow(
         'This field may not be blank.'
       );
     });
@@ -108,33 +103,27 @@ describe('StatusDataSource', () => {
     const input: BoardStatusInput = { name: 'In Progress', order: 1, color: '#3b82f6' };
 
     it('should return the updated status', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, { ...boardStatus, ...input }));
+      apiMock.onAny().reply(200, { ...boardStatus, ...input });
 
-      const result = await dataSource.updateStatus('valid-token', 1, 1, input);
+      const result = await dataSource.updateStatus(1, 1, input);
 
       expect(result).toEqual({ ...boardStatus, ...input });
     });
 
     it('should send a PATCH request to the status detail endpoint', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, boardStatus));
+      apiMock.onAny().reply(200, boardStatus);
 
-      await dataSource.updateStatus('valid-token', 1, 1, input);
+      await dataSource.updateStatus(1, 1, input);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/1/statuses/1/'),
-        expect.objectContaining({
-          method: 'PATCH',
-          body: JSON.stringify(input),
-        })
-      );
+      const request = apiMock.history.patch[0];
+      expect(request.url).toContain('/boards/1/statuses/1/');
+      expect(request.data).toBe(JSON.stringify(input));
     });
 
     it('should throw when the user is not allowed to update the status', async () => {
-      mockFetch.mockResolvedValue(
-        mockResponse(403, { detail: 'You do not have permission to perform this action.' })
-      );
+      apiMock.onAny().reply(403, { detail: 'You do not have permission to perform this action.' });
 
-      await expect(dataSource.updateStatus('valid-token', 1, 1, input)).rejects.toThrow(
+      await expect(dataSource.updateStatus(1, 1, input)).rejects.toThrow(
         'You do not have permission to perform this action.'
       );
     });
@@ -144,30 +133,24 @@ describe('StatusDataSource', () => {
 
   describe('deleteStatus', () => {
     it('should resolve when the deletion succeeds', async () => {
-      mockFetch.mockResolvedValue(mockResponse(204, null));
+      apiMock.onAny().reply(204);
 
-      await expect(dataSource.deleteStatus('valid-token', 1, 1)).resolves.toBeUndefined();
+      await expect(dataSource.deleteStatus(1, 1)).resolves.toBeUndefined();
     });
 
     it('should send a DELETE request to the status detail endpoint', async () => {
-      mockFetch.mockResolvedValue(mockResponse(204, null));
+      apiMock.onAny().reply(204);
 
-      await dataSource.deleteStatus('valid-token', 1, 1);
+      await dataSource.deleteStatus(1, 1);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/boards/1/statuses/1/'),
-        expect.objectContaining({
-          method: 'DELETE',
-          headers: { Authorization: 'Bearer valid-token' },
-        })
-      );
+      expect(apiMock.history.delete[0].url).toContain('/boards/1/statuses/1/');
     });
 
     it('should throw a default message when the deletion fails', async () => {
-      mockFetch.mockResolvedValue(mockResponse(500, {}));
+      apiMock.onAny().reply(500, {});
 
-      await expect(dataSource.deleteStatus('valid-token', 1, 1)).rejects.toThrow(
-        'Ocurrió un error inesperado. Intentá de nuevo.'
+      await expect(dataSource.deleteStatus(1, 1)).rejects.toThrow(
+        'El servidor tuvo un problema. Intentá de nuevo en unos minutos.'
       );
     });
   });

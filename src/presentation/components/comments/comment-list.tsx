@@ -55,7 +55,7 @@ export function CommentList({
         <CommentItem
           key={comment.id}
           comment={comment}
-          canManage={isOwner || comment.user_id === currentUserId}
+          canManage={isOwner || comment.userId === currentUserId}
           isEditing={editingId === comment.id}
           editContent={editContent}
           onEditContentChange={onEditContentChange}

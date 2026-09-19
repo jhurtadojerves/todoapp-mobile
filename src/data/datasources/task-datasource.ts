@@ -1,40 +1,43 @@
-import { Task, TaskFilters, TaskInput } from '@/domain/models/task';
-import { PaginatedResponse } from '@/domain/models/pagination';
+import { Task, TaskFilters, TaskInput, taskSchema } from '@/domain/models/task';
+import { PaginatedResponse, paginatedSchema } from '@/domain/models/pagination';
 import { apiFetch } from '@/shared/api/http-client';
 import { buildQueryString } from '@/shared/api/query-string';
 
 const tasksPath = (boardId: number) => `/api/v1/boards/${boardId}/tasks/`;
 const taskDetailPath = (id: number) => `/api/v1/tasks/${id}/`;
+const paginatedTaskSchema = paginatedSchema(taskSchema);
 
 export class TaskDataSource {
   fetchTasks(
-    token: string,
     boardId: number,
     page: number,
     filters: TaskFilters = {}
   ): Promise<PaginatedResponse<Task>> {
+    // Query params go straight in the URL, not through a JSON body, so they
+    // bypass http-client's camelCase<->snake_case conversion — this key must
+    // stay snake_case to match what the DRF filter backend expects.
     const query = buildQueryString({
       page,
       status: filters.status,
       sprint: filters.sprint,
-      assigned_to: filters.assigned_to,
+      assigned_to: filters.assignedTo,
     });
-    return apiFetch<PaginatedResponse<Task>>(`${tasksPath(boardId)}${query}`, { token });
+    return apiFetch(`${tasksPath(boardId)}${query}`, { schema: paginatedTaskSchema });
   }
 
-  fetchTask(token: string, id: number): Promise<Task> {
-    return apiFetch<Task>(taskDetailPath(id), { token });
+  fetchTask(id: number): Promise<Task> {
+    return apiFetch(taskDetailPath(id), { schema: taskSchema });
   }
 
-  createTask(token: string, boardId: number, input: TaskInput): Promise<Task> {
-    return apiFetch<Task>(tasksPath(boardId), { method: 'POST', body: input, token });
+  createTask(boardId: number, input: TaskInput): Promise<Task> {
+    return apiFetch(tasksPath(boardId), { method: 'POST', body: input, schema: taskSchema });
   }
 
-  updateTask(token: string, id: number, input: TaskInput): Promise<Task> {
-    return apiFetch<Task>(taskDetailPath(id), { method: 'PATCH', body: input, token });
+  updateTask(id: number, input: TaskInput): Promise<Task> {
+    return apiFetch(taskDetailPath(id), { method: 'PATCH', body: input, schema: taskSchema });
   }
 
-  deleteTask(token: string, id: number): Promise<void> {
-    return apiFetch<void>(taskDetailPath(id), { method: 'DELETE', token });
+  deleteTask(id: number): Promise<void> {
+    return apiFetch<void>(taskDetailPath(id), { method: 'DELETE' });
   }
 }

@@ -15,7 +15,7 @@ const board: Board = {
   id: 1,
   name: 'Sprint board',
   description: '',
-  user_id: 7,
+  userId: 7,
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
 };
@@ -29,18 +29,18 @@ describe('GetBoardsUseCase', () => {
     useCase = new GetBoardsUseCase(mockBoardRepository);
   });
 
-  it('should call boardRepository.fetchBoards with the given token and page', async () => {
+  it('should call boardRepository.fetchBoards with the given page', async () => {
     mockBoardRepository.fetchBoards.mockResolvedValue(page);
 
-    await useCase.execute('valid-token', 1);
+    await useCase.execute(1);
 
-    expect(mockBoardRepository.fetchBoards).toHaveBeenCalledWith('valid-token', 1);
+    expect(mockBoardRepository.fetchBoards).toHaveBeenCalledWith(1);
   });
 
   it('should return the paginated response from the repository', async () => {
     mockBoardRepository.fetchBoards.mockResolvedValue(page);
 
-    const result = await useCase.execute('valid-token', 1);
+    const result = await useCase.execute(1);
 
     expect(result).toEqual(page);
   });
@@ -48,6 +48,6 @@ describe('GetBoardsUseCase', () => {
   it('should propagate errors thrown by the repository', async () => {
     mockBoardRepository.fetchBoards.mockRejectedValue(new Error('Token is expired.'));
 
-    await expect(useCase.execute('expired-token', 1)).rejects.toThrow('Token is expired.');
+    await expect(useCase.execute(1)).rejects.toThrow('Token is expired.');
   });
 });

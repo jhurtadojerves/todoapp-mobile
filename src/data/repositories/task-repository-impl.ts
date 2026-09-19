@@ -7,27 +7,26 @@ export class TaskRepositoryImpl implements TaskRepository {
   constructor(private readonly dataSource: TaskDataSource) {}
 
   fetchTasks(
-    token: string,
     boardId: number,
     page: number,
     filters?: TaskFilters
   ): Promise<PaginatedResponse<Task>> {
-    return this.dataSource.fetchTasks(token, boardId, page, filters);
+    return this.dataSource.fetchTasks(boardId, page, filters);
   }
 
-  fetchTask(token: string, id: number): Promise<Task> {
-    return this.dataSource.fetchTask(token, id);
+  fetchTask(id: number): Promise<Task> {
+    return this.dataSource.fetchTask(id);
   }
 
-  createTask(token: string, boardId: number, input: TaskInput): Promise<Task> {
-    return this.dataSource.createTask(token, boardId, input);
+  createTask(boardId: number, input: TaskInput): Promise<Task> {
+    return this.dataSource.createTask(boardId, input);
   }
 
-  updateTask(token: string, id: number, input: TaskInput): Promise<Task> {
-    return this.dataSource.updateTask(token, id, input);
+  updateTask(id: number, input: TaskInput): Promise<Task> {
+    return this.dataSource.updateTask(id, input);
   }
 
-  deleteTask(token: string, id: number): Promise<void> {
-    return this.dataSource.deleteTask(token, id);
+  deleteTask(id: number): Promise<void> {
+    return this.dataSource.deleteTask(id);
   }
 }

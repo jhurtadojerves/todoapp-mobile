@@ -4,7 +4,7 @@ import { dependencies } from '@/shared/di/dependencies';
 import { useCallback, useEffect, useState } from 'react';
 
 export function useTaskDetailViewModel(taskId: number) {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,13 +12,13 @@ export function useTaskDetailViewModel(taskId: number) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const loadTask = useCallback(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     setIsLoading(true);
     setError(null);
 
     return dependencies.getTaskUseCase
-      .execute(token, taskId)
+      .execute(taskId)
       .then((payload) => {
         setTask(payload);
       })
@@ -28,21 +28,21 @@ export function useTaskDetailViewModel(taskId: number) {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [token, taskId]);
+  }, [isAuthenticated, taskId]);
 
   useEffect(() => {
     loadTask();
   }, [loadTask]);
 
   const deleteTask = async (): Promise<void> => {
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setIsDeleting(true);
     setDeleteError(null);
     try {
-      await dependencies.deleteTaskUseCase.execute(token, taskId);
+      await dependencies.deleteTaskUseCase.execute(taskId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo eliminar la tarea.';
       setDeleteError(message);

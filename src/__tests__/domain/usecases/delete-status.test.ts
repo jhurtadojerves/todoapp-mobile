@@ -16,12 +16,12 @@ describe('DeleteStatusUseCase', () => {
     useCase = new DeleteStatusUseCase(mockStatusRepository);
   });
 
-  it('should call statusRepository.deleteStatus with the given token, board id and status id', async () => {
+  it('should call statusRepository.deleteStatus with the given board id and status id', async () => {
     mockStatusRepository.deleteStatus.mockResolvedValue(undefined);
 
-    await useCase.execute('valid-token', 1, 1);
+    await useCase.execute(1, 1);
 
-    expect(mockStatusRepository.deleteStatus).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockStatusRepository.deleteStatus).toHaveBeenCalledWith(1, 1);
   });
 
   it('should propagate errors thrown by the repository', async () => {
@@ -29,7 +29,7 @@ describe('DeleteStatusUseCase', () => {
       new Error('You do not have permission to perform this action.')
     );
 
-    await expect(useCase.execute('valid-token', 1, 1)).rejects.toThrow(
+    await expect(useCase.execute(1, 1)).rejects.toThrow(
       'You do not have permission to perform this action.'
     );
   });

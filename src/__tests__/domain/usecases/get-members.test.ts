@@ -11,7 +11,7 @@ const mockMembershipRepository: jest.Mocked<MembershipRepository> = {
 
 const membership: BoardMembership = {
   id: 5,
-  board_id: 1,
+  boardId: 1,
   user: { id: 2, username: 'jane', email: 'jane@example.com' },
   role: 'member',
   created: '2026-01-01T00:00:00Z',
@@ -26,18 +26,18 @@ describe('GetMembersUseCase', () => {
     useCase = new GetMembersUseCase(mockMembershipRepository);
   });
 
-  it('should call membershipRepository.fetchMembers with the given token, board id and page', async () => {
+  it('should call membershipRepository.fetchMembers with the given board id and page', async () => {
     mockMembershipRepository.fetchMembers.mockResolvedValue(page);
 
-    await useCase.execute('valid-token', 1, 1);
+    await useCase.execute(1, 1);
 
-    expect(mockMembershipRepository.fetchMembers).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockMembershipRepository.fetchMembers).toHaveBeenCalledWith(1, 1);
   });
 
   it('should return the paginated response from the repository', async () => {
     mockMembershipRepository.fetchMembers.mockResolvedValue(page);
 
-    const result = await useCase.execute('valid-token', 1, 1);
+    const result = await useCase.execute(1, 1);
 
     expect(result).toEqual(page);
   });
@@ -47,7 +47,7 @@ describe('GetMembersUseCase', () => {
       new Error('You do not have permission to perform this action.')
     );
 
-    await expect(useCase.execute('valid-token', 1, 1)).rejects.toThrow(
+    await expect(useCase.execute(1, 1)).rejects.toThrow(
       'You do not have permission to perform this action.'
     );
   });

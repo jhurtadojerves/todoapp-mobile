@@ -24,9 +24,9 @@ describe('StatusRepositoryImpl', () => {
     const page: PaginatedResponse<BoardStatus> = { count: 1, next: null, previous: null, results: [boardStatus] };
     mockDataSource.fetchStatuses.mockResolvedValue(page);
 
-    const result = await repository.fetchStatuses('valid-token', 1, 1);
+    const result = await repository.fetchStatuses(1, 1);
 
-    expect(mockDataSource.fetchStatuses).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockDataSource.fetchStatuses).toHaveBeenCalledWith(1, 1);
     expect(result).toEqual(page);
   });
 
@@ -34,9 +34,9 @@ describe('StatusRepositoryImpl', () => {
     const input: BoardStatusInput = { name: 'To Do', order: 0, color: '#64748b' };
     mockDataSource.createStatus.mockResolvedValue(boardStatus);
 
-    const result = await repository.createStatus('valid-token', 1, input);
+    const result = await repository.createStatus(1, input);
 
-    expect(mockDataSource.createStatus).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockDataSource.createStatus).toHaveBeenCalledWith(1, input);
     expect(result).toEqual(boardStatus);
   });
 
@@ -44,23 +44,23 @@ describe('StatusRepositoryImpl', () => {
     const input: BoardStatusInput = { name: 'Done', order: 2, color: '#22c55e' };
     mockDataSource.updateStatus.mockResolvedValue(boardStatus);
 
-    const result = await repository.updateStatus('valid-token', 1, 1, input);
+    const result = await repository.updateStatus(1, 1, input);
 
-    expect(mockDataSource.updateStatus).toHaveBeenCalledWith('valid-token', 1, 1, input);
+    expect(mockDataSource.updateStatus).toHaveBeenCalledWith(1, 1, input);
     expect(result).toEqual(boardStatus);
   });
 
   it('should delegate deleteStatus to the data source', async () => {
     mockDataSource.deleteStatus.mockResolvedValue(undefined);
 
-    await repository.deleteStatus('valid-token', 1, 1);
+    await repository.deleteStatus(1, 1);
 
-    expect(mockDataSource.deleteStatus).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockDataSource.deleteStatus).toHaveBeenCalledWith(1, 1);
   });
 
   it('should propagate errors from the data source', async () => {
     mockDataSource.fetchStatuses.mockRejectedValue(new Error('Network error'));
 
-    await expect(repository.fetchStatuses('some-token', 1, 1)).rejects.toThrow('Network error');
+    await expect(repository.fetchStatuses(1, 1)).rejects.toThrow('Network error');
   });
 });

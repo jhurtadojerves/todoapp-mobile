@@ -7,7 +7,7 @@ import { dependencies } from '@/shared/di/dependencies';
 import { useEffect, useState } from 'react';
 
 export function useTaskFormViewModel(boardId: number, taskId?: number) {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const isEditing = taskId !== undefined;
 
   const [title, setTitleValue] = useState('');
@@ -26,18 +26,18 @@ export function useTaskFormViewModel(boardId: number, taskId?: number) {
   const [titleError, setTitleError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     let isMounted = true;
     setIsLoading(true);
     setError(null);
 
     const loadOptions = Promise.all([
-      dependencies.getStatusesUseCase.execute(token, boardId, 1),
-      dependencies.getSprintsUseCase.execute(token, boardId, 1),
-      dependencies.getMembersUseCase.execute(token, boardId, 1),
+      dependencies.getStatusesUseCase.execute(boardId, 1),
+      dependencies.getSprintsUseCase.execute(boardId, 1),
+      dependencies.getMembersUseCase.execute(boardId, 1),
     ]);
     const loadTask: Promise<Task | null> = isEditing
-      ? dependencies.getTaskUseCase.execute(token, taskId)
+      ? dependencies.getTaskUseCase.execute(taskId)
       : Promise.resolve(null);
 
     Promise.all([loadOptions, loadTask])
@@ -51,7 +51,7 @@ export function useTaskFormViewModel(boardId: number, taskId?: number) {
           setDescription(task.description);
           setStatusId(task.status?.id ?? null);
           setSprintId(task.sprint?.id ?? null);
-          setAssignedToId(task.assigned_to_id);
+          setAssignedToId(task.assignedToId);
         }
       })
       .catch((err) => {
@@ -68,7 +68,7 @@ export function useTaskFormViewModel(boardId: number, taskId?: number) {
     return () => {
       isMounted = false;
     };
-  }, [token, boardId, taskId, isEditing]);
+  }, [isAuthenticated, boardId, taskId, isEditing]);
 
   const setTitle = (value: string) => {
     setTitleValue(value);
@@ -85,24 +85,24 @@ export function useTaskFormViewModel(boardId: number, taskId?: number) {
       throw new Error('El título es obligatorio');
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     const input: TaskInput = {
       title: title.trim(),
       description,
-      status_id: statusId,
-      sprint_id: sprintId,
-      assigned_to_id: assignedToId,
+      statusId,
+      sprintId,
+      assignedToId,
     };
 
     setIsSubmitting(true);
     try {
       if (isEditing) {
-        return await dependencies.updateTaskUseCase.execute(token, taskId, input);
+        return await dependencies.updateTaskUseCase.execute(taskId, input);
       }
-      return await dependencies.createTaskUseCase.execute(token, boardId, input);
+      return await dependencies.createTaskUseCase.execute(boardId, input);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo guardar la tarea.';
       setError(message);

@@ -1,32 +1,36 @@
-import { Sprint, SprintInput } from '@/domain/models/sprint';
-import { PaginatedResponse } from '@/domain/models/pagination';
+import { Sprint, SprintInput, sprintSchema } from '@/domain/models/sprint';
+import { PaginatedResponse, paginatedSchema } from '@/domain/models/pagination';
 import { apiFetch } from '@/shared/api/http-client';
 import { buildQueryString } from '@/shared/api/query-string';
 
 const sprintsPath = (boardId: number) => `/api/v1/boards/${boardId}/sprints/`;
 const sprintDetailPath = (boardId: number, id: number) => `/api/v1/boards/${boardId}/sprints/${id}/`;
+const paginatedSprintSchema = paginatedSchema(sprintSchema);
 
 export class SprintDataSource {
-  fetchSprints(token: string, boardId: number, page: number): Promise<PaginatedResponse<Sprint>> {
-    return apiFetch<PaginatedResponse<Sprint>>(`${sprintsPath(boardId)}${buildQueryString({ page })}`, {
-      token,
+  fetchSprints(boardId: number, page: number): Promise<PaginatedResponse<Sprint>> {
+    return apiFetch(`${sprintsPath(boardId)}${buildQueryString({ page })}`, {
+      schema: paginatedSprintSchema,
     });
   }
 
-  createSprint(token: string, boardId: number, input: SprintInput): Promise<Sprint> {
-    return apiFetch<Sprint>(sprintsPath(boardId), { method: 'POST', body: input, token });
+  createSprint(boardId: number, input: SprintInput): Promise<Sprint> {
+    return apiFetch(sprintsPath(boardId), { method: 'POST', body: input, schema: sprintSchema });
   }
 
   updateSprint(
-    token: string,
     boardId: number,
     id: number,
     input: SprintInput
   ): Promise<Sprint> {
-    return apiFetch<Sprint>(sprintDetailPath(boardId, id), { method: 'PATCH', body: input, token });
+    return apiFetch(sprintDetailPath(boardId, id), {
+      method: 'PATCH',
+      body: input,
+      schema: sprintSchema,
+    });
   }
 
-  deleteSprint(token: string, boardId: number, id: number): Promise<void> {
-    return apiFetch<void>(sprintDetailPath(boardId, id), { method: 'DELETE', token });
+  deleteSprint(boardId: number, id: number): Promise<void> {
+    return apiFetch<void>(sprintDetailPath(boardId, id), { method: 'DELETE' });
   }
 }

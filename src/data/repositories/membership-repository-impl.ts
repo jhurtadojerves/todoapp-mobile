@@ -6,15 +6,15 @@ import { MembershipRepository } from '@/domain/repositories/membership-repositor
 export class MembershipRepositoryImpl implements MembershipRepository {
   constructor(private readonly dataSource: MembershipDataSource) {}
 
-  fetchMembers(token: string, boardId: number, page: number): Promise<PaginatedResponse<BoardMembership>> {
-    return this.dataSource.fetchMembers(token, boardId, page);
+  fetchMembers(boardId: number, page: number): Promise<PaginatedResponse<BoardMembership>> {
+    return this.dataSource.fetchMembers(boardId, page);
   }
 
-  addMember(token: string, boardId: number, input: BoardMembershipInput): Promise<BoardMembership> {
-    return this.dataSource.addMember(token, boardId, input);
+  addMember(boardId: number, input: BoardMembershipInput): Promise<BoardMembership> {
+    return this.dataSource.addMember(boardId, input);
   }
 
-  removeMember(token: string, boardId: number, membershipId: number): Promise<void> {
-    return this.dataSource.removeMember(token, boardId, membershipId);
+  removeMember(boardId: number, membershipId: number): Promise<void> {
+    return this.dataSource.removeMember(boardId, membershipId);
   }
 }

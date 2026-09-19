@@ -26,12 +26,12 @@ export function UserCard({ user }: Props) {
           justifyContent="center"
         >
           <Paragraph color="$primaryContrast" fontWeight="700">
-            {user.first_name?.charAt(0).toUpperCase()}
+            {user.firstName?.charAt(0).toUpperCase()}
           </Paragraph>
         </YStack>
         <YStack gap="$1">
           <Paragraph fontWeight="700" color="$text" fontSize={16}>
-            {user.first_name} {user.last_name}
+            {user.firstName} {user.lastName}
           </Paragraph>
           <Paragraph color="$muted" fontSize={14}>
             {user.email}

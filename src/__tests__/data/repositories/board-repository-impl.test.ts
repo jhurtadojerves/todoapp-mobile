@@ -15,7 +15,7 @@ const board: Board = {
   id: 1,
   name: 'Sprint board',
   description: 'Board for the current sprint',
-  user_id: 7,
+  userId: 7,
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
 };
@@ -32,18 +32,18 @@ describe('BoardRepositoryImpl', () => {
     const page: PaginatedResponse<Board> = { count: 1, next: null, previous: null, results: [board] };
     mockDataSource.fetchBoards.mockResolvedValue(page);
 
-    const result = await repository.fetchBoards('valid-token', 1);
+    const result = await repository.fetchBoards(1);
 
-    expect(mockDataSource.fetchBoards).toHaveBeenCalledWith('valid-token', 1);
+    expect(mockDataSource.fetchBoards).toHaveBeenCalledWith(1);
     expect(result).toEqual(page);
   });
 
   it('should delegate fetchBoard to the data source', async () => {
     mockDataSource.fetchBoard.mockResolvedValue(board);
 
-    const result = await repository.fetchBoard('valid-token', 1);
+    const result = await repository.fetchBoard(1);
 
-    expect(mockDataSource.fetchBoard).toHaveBeenCalledWith('valid-token', 1);
+    expect(mockDataSource.fetchBoard).toHaveBeenCalledWith(1);
     expect(result).toEqual(board);
   });
 
@@ -51,9 +51,9 @@ describe('BoardRepositoryImpl', () => {
     const input: BoardInput = { name: 'New board', description: '' };
     mockDataSource.createBoard.mockResolvedValue(board);
 
-    const result = await repository.createBoard('valid-token', input);
+    const result = await repository.createBoard(input);
 
-    expect(mockDataSource.createBoard).toHaveBeenCalledWith('valid-token', input);
+    expect(mockDataSource.createBoard).toHaveBeenCalledWith(input);
     expect(result).toEqual(board);
   });
 
@@ -61,23 +61,23 @@ describe('BoardRepositoryImpl', () => {
     const input: BoardInput = { name: 'Updated', description: '' };
     mockDataSource.updateBoard.mockResolvedValue(board);
 
-    const result = await repository.updateBoard('valid-token', 1, input);
+    const result = await repository.updateBoard(1, input);
 
-    expect(mockDataSource.updateBoard).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockDataSource.updateBoard).toHaveBeenCalledWith(1, input);
     expect(result).toEqual(board);
   });
 
   it('should delegate deleteBoard to the data source', async () => {
     mockDataSource.deleteBoard.mockResolvedValue(undefined);
 
-    await repository.deleteBoard('valid-token', 1);
+    await repository.deleteBoard(1);
 
-    expect(mockDataSource.deleteBoard).toHaveBeenCalledWith('valid-token', 1);
+    expect(mockDataSource.deleteBoard).toHaveBeenCalledWith(1);
   });
 
   it('should propagate errors from the data source', async () => {
     mockDataSource.fetchBoards.mockRejectedValue(new Error('Network error'));
 
-    await expect(repository.fetchBoards('some-token', 1)).rejects.toThrow('Network error');
+    await expect(repository.fetchBoards(1)).rejects.toThrow('Network error');
   });
 });

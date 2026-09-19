@@ -23,14 +23,14 @@ describe('RegisterUseCase', () => {
       email: 'new@example.com',
       password: 'StrongPass1!',
       password2: 'StrongPass1!',
-      first_name: 'John',
-      last_name: 'Doe',
+      firstName: 'John',
+      lastName: 'Doe',
     };
     const registeredUser: RegisteredUser = {
       username: 'johndoe',
       email: 'new@example.com',
-      first_name: 'John',
-      last_name: 'Doe',
+      firstName: 'John',
+      lastName: 'Doe',
     };
     mockAuthRepository.register.mockResolvedValue(registeredUser);
 
@@ -46,14 +46,14 @@ describe('RegisterUseCase', () => {
       email: 'new@example.com',
       password: 'StrongPass1!',
       password2: 'StrongPass1!',
-      first_name: 'Jane',
-      last_name: 'Doe',
+      firstName: 'Jane',
+      lastName: 'Doe',
     };
     const registeredUser: RegisteredUser = {
       username: 'janedoe',
       email: 'new@example.com',
-      first_name: 'Jane',
-      last_name: 'Doe',
+      firstName: 'Jane',
+      lastName: 'Doe',
     };
     mockAuthRepository.register.mockResolvedValue(registeredUser);
 
@@ -68,8 +68,8 @@ describe('RegisterUseCase', () => {
       email: 'duplicate@example.com',
       password: 'pass',
       password2: 'pass',
-      first_name: 'A',
-      last_name: 'B',
+      firstName: 'A',
+      lastName: 'B',
     };
     mockAuthRepository.register.mockRejectedValue(new Error('Email already in use'));
 

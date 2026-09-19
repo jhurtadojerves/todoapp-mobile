@@ -12,11 +12,11 @@ const mockTaskRepository: jest.Mocked<TaskRepository> = {
 
 const task: Task = {
   id: 1,
-  board_id: 1,
+  boardId: 1,
   sprint: null,
   status: { id: 2, name: 'Done', color: '#22c55e' },
-  user_id: 7,
-  assigned_to_id: null,
+  userId: 7,
+  assignedToId: null,
   title: 'Updated title',
   description: '',
   created: '2026-01-01T00:00:00Z',
@@ -31,32 +31,32 @@ describe('UpdateTaskUseCase', () => {
     useCase = new UpdateTaskUseCase(mockTaskRepository);
   });
 
-  it('should call taskRepository.updateTask with the given token, id and input', async () => {
+  it('should call taskRepository.updateTask with the given id and input', async () => {
     const input: TaskInput = {
       title: 'Updated title',
       description: '',
-      status_id: 2,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: 2,
+      sprintId: null,
+      assignedToId: null,
     };
     mockTaskRepository.updateTask.mockResolvedValue(task);
 
-    await useCase.execute('valid-token', 1, input);
+    await useCase.execute(1, input);
 
-    expect(mockTaskRepository.updateTask).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockTaskRepository.updateTask).toHaveBeenCalledWith(1, input);
   });
 
   it('should return the updated task from the repository', async () => {
     const input: TaskInput = {
       title: 'Updated title',
       description: '',
-      status_id: 2,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: 2,
+      sprintId: null,
+      assignedToId: null,
     };
     mockTaskRepository.updateTask.mockResolvedValue(task);
 
-    const result = await useCase.execute('valid-token', 1, input);
+    const result = await useCase.execute(1, input);
 
     expect(result).toEqual(task);
   });
@@ -65,15 +65,15 @@ describe('UpdateTaskUseCase', () => {
     const input: TaskInput = {
       title: 'Updated title',
       description: '',
-      status_id: null,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: null,
+      sprintId: null,
+      assignedToId: null,
     };
     mockTaskRepository.updateTask.mockRejectedValue(
       new Error('You do not have permission to perform this action.')
     );
 
-    await expect(useCase.execute('valid-token', 1, input)).rejects.toThrow(
+    await expect(useCase.execute(1, input)).rejects.toThrow(
       'You do not have permission to perform this action.'
     );
   });

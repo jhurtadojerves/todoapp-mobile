@@ -19,7 +19,7 @@ describe('ValidatePasswordUseCase', () => {
 
   it('should call authRepository.validatePassword with the given password', async () => {
     const password = 'StrongPass1!';
-    const result: PasswordValidationResult = { is_valid: true, errors: [] };
+    const result: PasswordValidationResult = { isValid: true, errors: [] };
     mockAuthRepository.validatePassword.mockResolvedValue(result);
 
     await useCase.execute(password);
@@ -28,25 +28,25 @@ describe('ValidatePasswordUseCase', () => {
     expect(mockAuthRepository.validatePassword).toHaveBeenCalledWith(password);
   });
 
-  it('should return is_valid true and empty errors for a strong password', async () => {
-    mockAuthRepository.validatePassword.mockResolvedValue({ is_valid: true, errors: [] });
+  it('should return isValid true and empty errors for a strong password', async () => {
+    mockAuthRepository.validatePassword.mockResolvedValue({ isValid: true, errors: [] });
 
     const result = await useCase.execute('StrongPass1!');
 
-    expect(result.is_valid).toBe(true);
+    expect(result.isValid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
 
-  it('should return is_valid false and error messages for a weak password', async () => {
+  it('should return isValid false and error messages for a weak password', async () => {
     const validationResult: PasswordValidationResult = {
-      is_valid: false,
+      isValid: false,
       errors: ['Password is too short.', 'Password must contain at least one number.'],
     };
     mockAuthRepository.validatePassword.mockResolvedValue(validationResult);
 
     const result = await useCase.execute('weak');
 
-    expect(result.is_valid).toBe(false);
+    expect(result.isValid).toBe(false);
     expect(result.errors).toEqual(['Password is too short.', 'Password must contain at least one number.']);
   });
 

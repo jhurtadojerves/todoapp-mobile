@@ -12,11 +12,11 @@ const mockTaskRepository: jest.Mocked<TaskRepository> = {
 
 const task: Task = {
   id: 1,
-  board_id: 1,
+  boardId: 1,
   sprint: null,
   status: null,
-  user_id: 7,
-  assigned_to_id: null,
+  userId: 7,
+  assignedToId: null,
   title: 'Fix the bug',
   description: '',
   created: '2026-01-01T00:00:00Z',
@@ -31,18 +31,18 @@ describe('GetTaskUseCase', () => {
     useCase = new GetTaskUseCase(mockTaskRepository);
   });
 
-  it('should call taskRepository.fetchTask with the given token and id', async () => {
+  it('should call taskRepository.fetchTask with the given id', async () => {
     mockTaskRepository.fetchTask.mockResolvedValue(task);
 
-    await useCase.execute('valid-token', 1);
+    await useCase.execute(1);
 
-    expect(mockTaskRepository.fetchTask).toHaveBeenCalledWith('valid-token', 1);
+    expect(mockTaskRepository.fetchTask).toHaveBeenCalledWith(1);
   });
 
   it('should return the task from the repository', async () => {
     mockTaskRepository.fetchTask.mockResolvedValue(task);
 
-    const result = await useCase.execute('valid-token', 1);
+    const result = await useCase.execute(1);
 
     expect(result).toEqual(task);
   });
@@ -50,6 +50,6 @@ describe('GetTaskUseCase', () => {
   it('should propagate errors thrown by the repository', async () => {
     mockTaskRepository.fetchTask.mockRejectedValue(new Error('Not found.'));
 
-    await expect(useCase.execute('valid-token', 999)).rejects.toThrow('Not found.');
+    await expect(useCase.execute(999)).rejects.toThrow('Not found.');
   });
 });

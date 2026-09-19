@@ -6,11 +6,10 @@ export class GetTasksUseCase {
   constructor(private readonly taskRepository: TaskRepository) {}
 
   execute(
-    token: string,
     boardId: number,
     page: number,
     filters?: TaskFilters
   ): Promise<PaginatedResponse<Task>> {
-    return this.taskRepository.fetchTasks(token, boardId, page, filters);
+    return this.taskRepository.fetchTasks(boardId, page, filters);
   }
 }

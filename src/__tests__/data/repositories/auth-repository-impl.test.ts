@@ -50,14 +50,14 @@ describe('AuthRepositoryImpl', () => {
         email: 'new@example.com',
         password: 'pass',
         password2: 'pass',
-        first_name: 'A',
-        last_name: 'B',
+        firstName: 'A',
+        lastName: 'B',
       };
       const registeredUser: RegisteredUser = {
         username: 'newuser',
         email: 'new@example.com',
-        first_name: 'A',
-        last_name: 'B',
+        firstName: 'A',
+        lastName: 'B',
       };
       mockDataSource.register.mockResolvedValue(registeredUser);
 
@@ -70,7 +70,7 @@ describe('AuthRepositoryImpl', () => {
 
   describe('validatePassword', () => {
     it('should delegate to dataSource.validatePassword', async () => {
-      const validationResult: PasswordValidationResult = { is_valid: true, errors: [] };
+      const validationResult: PasswordValidationResult = { isValid: true, errors: [] };
       mockDataSource.validatePassword.mockResolvedValue(validationResult);
 
       const result = await repository.validatePassword('StrongPass1!');

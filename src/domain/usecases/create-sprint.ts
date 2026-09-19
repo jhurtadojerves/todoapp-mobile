@@ -4,7 +4,7 @@ import { SprintRepository } from '@/domain/repositories/sprint-repository';
 export class CreateSprintUseCase {
   constructor(private readonly sprintRepository: SprintRepository) {}
 
-  execute(token: string, boardId: number, input: SprintInput): Promise<Sprint> {
-    return this.sprintRepository.createSprint(token, boardId, input);
+  execute(boardId: number, input: SprintInput): Promise<Sprint> {
+    return this.sprintRepository.createSprint(boardId, input);
   }
 }

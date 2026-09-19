@@ -5,11 +5,10 @@ export class UpdateStatusUseCase {
   constructor(private readonly statusRepository: StatusRepository) {}
 
   execute(
-    token: string,
     boardId: number,
     id: number,
     input: BoardStatusInput
   ): Promise<BoardStatus> {
-    return this.statusRepository.updateStatus(token, boardId, id, input);
+    return this.statusRepository.updateStatus(boardId, id, input);
   }
 }

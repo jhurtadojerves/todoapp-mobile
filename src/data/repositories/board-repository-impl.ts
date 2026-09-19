@@ -6,23 +6,23 @@ import { BoardRepository } from '@/domain/repositories/board-repository';
 export class BoardRepositoryImpl implements BoardRepository {
   constructor(private readonly dataSource: BoardDataSource) {}
 
-  fetchBoards(token: string, page: number): Promise<PaginatedResponse<Board>> {
-    return this.dataSource.fetchBoards(token, page);
+  fetchBoards(page: number): Promise<PaginatedResponse<Board>> {
+    return this.dataSource.fetchBoards(page);
   }
 
-  fetchBoard(token: string, id: number): Promise<Board> {
-    return this.dataSource.fetchBoard(token, id);
+  fetchBoard(id: number): Promise<Board> {
+    return this.dataSource.fetchBoard(id);
   }
 
-  createBoard(token: string, input: BoardInput): Promise<Board> {
-    return this.dataSource.createBoard(token, input);
+  createBoard(input: BoardInput): Promise<Board> {
+    return this.dataSource.createBoard(input);
   }
 
-  updateBoard(token: string, id: number, input: BoardInput): Promise<Board> {
-    return this.dataSource.updateBoard(token, id, input);
+  updateBoard(id: number, input: BoardInput): Promise<Board> {
+    return this.dataSource.updateBoard(id, input);
   }
 
-  deleteBoard(token: string, id: number): Promise<void> {
-    return this.dataSource.deleteBoard(token, id);
+  deleteBoard(id: number): Promise<void> {
+    return this.dataSource.deleteBoard(id);
   }
 }

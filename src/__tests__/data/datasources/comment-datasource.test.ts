@@ -1,22 +1,27 @@
+import MockAdapter from 'axios-mock-adapter';
+
 import { CommentDataSource } from '@/data/datasources/comment-datasource';
 import { Comment, CommentInput } from '@/domain/models/comment';
 import { PaginatedResponse } from '@/domain/models/pagination';
+import { apiClient } from '@/shared/api/http-client';
+import { storage } from '@/shared/utils/storage';
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+jest.mock('@/shared/utils/storage', () => ({
+  storage: {
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+    deleteItem: jest.fn(),
+  },
+}));
 
-function mockResponse(status: number, body: unknown): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: jest.fn().mockResolvedValue(body),
-  } as unknown as Response;
-}
+const apiMock = new MockAdapter(apiClient);
+
+const mockGetItem = storage.getItem as jest.Mock;
 
 const comment: Comment = {
   id: 1,
-  task_id: 1,
-  user_id: 7,
+  taskId: 1,
+  userId: 7,
   content: 'Looks good to me.',
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
@@ -26,7 +31,9 @@ describe('CommentDataSource', () => {
   let dataSource: CommentDataSource;
 
   beforeEach(() => {
+    apiMock.reset();
     jest.clearAllMocks();
+    mockGetItem.mockResolvedValue(null);
     dataSource = new CommentDataSource();
   });
 
@@ -40,29 +47,26 @@ describe('CommentDataSource', () => {
         previous: null,
         results: [comment],
       };
-      mockFetch.mockResolvedValue(mockResponse(200, paginated));
+      apiMock.onAny().reply(200, paginated);
 
-      const result = await dataSource.fetchComments('valid-token', 1, 1);
+      const result = await dataSource.fetchComments(1, 1);
 
       expect(result).toEqual(paginated);
     });
 
     it('should request the comments endpoint with the page query param', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, { count: 0, next: null, previous: null, results: [] }));
+      apiMock.onAny().reply(200, { count: 0, next: null, previous: null, results: [] });
 
-      await dataSource.fetchComments('valid-token', 1, 2);
+      await dataSource.fetchComments(1, 2);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tasks/1/comments/?page=2'),
-        expect.objectContaining({ headers: { Authorization: 'Bearer valid-token' } })
-      );
+      expect(apiMock.history.get[0].url).toContain('/tasks/1/comments/?page=2');
     });
 
     it('should throw a default message when the request fails', async () => {
-      mockFetch.mockResolvedValue(mockResponse(500, {}));
+      apiMock.onAny().reply(500, {});
 
-      await expect(dataSource.fetchComments('valid-token', 1, 1)).rejects.toThrow(
-        'Ocurrió un error inesperado. Intentá de nuevo.'
+      await expect(dataSource.fetchComments(1, 1)).rejects.toThrow(
+        'El servidor tuvo un problema. Intentá de nuevo en unos minutos.'
       );
     });
   });
@@ -73,32 +77,28 @@ describe('CommentDataSource', () => {
     const input: CommentInput = { content: 'Looks good to me.' };
 
     it('should return the created comment', async () => {
-      mockFetch.mockResolvedValue(mockResponse(201, comment));
+      apiMock.onAny().reply(201, comment);
 
-      const result = await dataSource.createComment('valid-token', 1, input);
+      const result = await dataSource.createComment(1, input);
 
       expect(result).toEqual(comment);
     });
 
     it('should send a POST request with the comment input', async () => {
-      mockFetch.mockResolvedValue(mockResponse(201, comment));
+      apiMock.onAny().reply(201, comment);
 
-      await dataSource.createComment('valid-token', 1, input);
+      await dataSource.createComment(1, input);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tasks/1/comments/'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid-token' },
-          body: JSON.stringify(input),
-        })
-      );
+      const request = apiMock.history.post[0];
+      expect(request.url).toContain('/tasks/1/comments/');
+      expect(request.headers?.['Content-Type']).toContain('application/json');
+      expect(request.data).toBe(JSON.stringify(input));
     });
 
     it('should throw with the field error message when present', async () => {
-      mockFetch.mockResolvedValue(mockResponse(400, { content: ['This field may not be blank.'] }));
+      apiMock.onAny().reply(400, { content: ['This field may not be blank.'] });
 
-      await expect(dataSource.createComment('valid-token', 1, input)).rejects.toThrow(
+      await expect(dataSource.createComment(1, input)).rejects.toThrow(
         'This field may not be blank.'
       );
     });
@@ -110,30 +110,27 @@ describe('CommentDataSource', () => {
     const input: CommentInput = { content: 'Updated comment.' };
 
     it('should return the updated comment', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, { ...comment, content: 'Updated comment.' }));
+      apiMock.onAny().reply(200, { ...comment, content: 'Updated comment.' });
 
-      const result = await dataSource.updateComment('valid-token', 1, 1, input);
+      const result = await dataSource.updateComment(1, 1, input);
 
       expect(result).toEqual({ ...comment, content: 'Updated comment.' });
     });
 
     it('should send a PATCH request to the comment detail endpoint', async () => {
-      mockFetch.mockResolvedValue(mockResponse(200, comment));
+      apiMock.onAny().reply(200, comment);
 
-      await dataSource.updateComment('valid-token', 1, 1, input);
+      await dataSource.updateComment(1, 1, input);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tasks/1/comments/1/'),
-        expect.objectContaining({ method: 'PATCH', body: JSON.stringify(input) })
-      );
+      const request = apiMock.history.patch[0];
+      expect(request.url).toContain('/tasks/1/comments/1/');
+      expect(request.data).toBe(JSON.stringify(input));
     });
 
     it('should throw a permission error when the user cannot edit the comment', async () => {
-      mockFetch.mockResolvedValue(
-        mockResponse(403, { detail: 'You do not have permission to perform this action.' })
-      );
+      apiMock.onAny().reply(403, { detail: 'You do not have permission to perform this action.' });
 
-      await expect(dataSource.updateComment('valid-token', 1, 1, input)).rejects.toThrow(
+      await expect(dataSource.updateComment(1, 1, input)).rejects.toThrow(
         'You do not have permission to perform this action.'
       );
     });
@@ -143,20 +140,17 @@ describe('CommentDataSource', () => {
 
   describe('deleteComment', () => {
     it('should resolve when the deletion succeeds', async () => {
-      mockFetch.mockResolvedValue(mockResponse(204, null));
+      apiMock.onAny().reply(204);
 
-      await expect(dataSource.deleteComment('valid-token', 1, 1)).resolves.toBeUndefined();
+      await expect(dataSource.deleteComment(1, 1)).resolves.toBeUndefined();
     });
 
     it('should send a DELETE request to the comment detail endpoint', async () => {
-      mockFetch.mockResolvedValue(mockResponse(204, null));
+      apiMock.onAny().reply(204);
 
-      await dataSource.deleteComment('valid-token', 1, 1);
+      await dataSource.deleteComment(1, 1);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tasks/1/comments/1/'),
-        expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer valid-token' } })
-      );
+      expect(apiMock.history.delete[0].url).toContain('/tasks/1/comments/1/');
     });
   });
 });

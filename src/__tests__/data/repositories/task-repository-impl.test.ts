@@ -13,11 +13,11 @@ const mockDataSource: jest.Mocked<TaskDataSource> = {
 
 const task: Task = {
   id: 1,
-  board_id: 1,
+  boardId: 1,
   sprint: null,
   status: null,
-  user_id: 7,
-  assigned_to_id: null,
+  userId: 7,
+  assignedToId: null,
   title: 'Fix the bug',
   description: '',
   created: '2026-01-01T00:00:00Z',
@@ -36,18 +36,18 @@ describe('TaskRepositoryImpl', () => {
     const page: PaginatedResponse<Task> = { count: 1, next: null, previous: null, results: [task] };
     mockDataSource.fetchTasks.mockResolvedValue(page);
 
-    const result = await repository.fetchTasks('valid-token', 1, 1, { status: 2 });
+    const result = await repository.fetchTasks(1, 1, { status: 2 });
 
-    expect(mockDataSource.fetchTasks).toHaveBeenCalledWith('valid-token', 1, 1, { status: 2 });
+    expect(mockDataSource.fetchTasks).toHaveBeenCalledWith(1, 1, { status: 2 });
     expect(result).toEqual(page);
   });
 
   it('should delegate fetchTask to the data source', async () => {
     mockDataSource.fetchTask.mockResolvedValue(task);
 
-    const result = await repository.fetchTask('valid-token', 1);
+    const result = await repository.fetchTask(1);
 
-    expect(mockDataSource.fetchTask).toHaveBeenCalledWith('valid-token', 1);
+    expect(mockDataSource.fetchTask).toHaveBeenCalledWith(1);
     expect(result).toEqual(task);
   });
 
@@ -55,15 +55,15 @@ describe('TaskRepositoryImpl', () => {
     const input: TaskInput = {
       title: 'New task',
       description: '',
-      status_id: null,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: null,
+      sprintId: null,
+      assignedToId: null,
     };
     mockDataSource.createTask.mockResolvedValue(task);
 
-    const result = await repository.createTask('valid-token', 1, input);
+    const result = await repository.createTask(1, input);
 
-    expect(mockDataSource.createTask).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockDataSource.createTask).toHaveBeenCalledWith(1, input);
     expect(result).toEqual(task);
   });
 
@@ -71,29 +71,29 @@ describe('TaskRepositoryImpl', () => {
     const input: TaskInput = {
       title: 'Updated',
       description: '',
-      status_id: null,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: null,
+      sprintId: null,
+      assignedToId: null,
     };
     mockDataSource.updateTask.mockResolvedValue(task);
 
-    const result = await repository.updateTask('valid-token', 1, input);
+    const result = await repository.updateTask(1, input);
 
-    expect(mockDataSource.updateTask).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockDataSource.updateTask).toHaveBeenCalledWith(1, input);
     expect(result).toEqual(task);
   });
 
   it('should delegate deleteTask to the data source', async () => {
     mockDataSource.deleteTask.mockResolvedValue(undefined);
 
-    await repository.deleteTask('valid-token', 1);
+    await repository.deleteTask(1);
 
-    expect(mockDataSource.deleteTask).toHaveBeenCalledWith('valid-token', 1);
+    expect(mockDataSource.deleteTask).toHaveBeenCalledWith(1);
   });
 
   it('should propagate errors from the data source', async () => {
     mockDataSource.fetchTasks.mockRejectedValue(new Error('Network error'));
 
-    await expect(repository.fetchTasks('some-token', 1, 1)).rejects.toThrow('Network error');
+    await expect(repository.fetchTasks(1, 1)).rejects.toThrow('Network error');
   });
 });

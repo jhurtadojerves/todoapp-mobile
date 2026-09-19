@@ -19,20 +19,20 @@ describe('CreateStatusUseCase', () => {
     useCase = new CreateStatusUseCase(mockStatusRepository);
   });
 
-  it('should call statusRepository.createStatus with the given token, board id and input', async () => {
+  it('should call statusRepository.createStatus with the given board id and input', async () => {
     const input: BoardStatusInput = { name: 'To Do', order: 0, color: '#64748b' };
     mockStatusRepository.createStatus.mockResolvedValue(boardStatus);
 
-    await useCase.execute('valid-token', 1, input);
+    await useCase.execute(1, input);
 
-    expect(mockStatusRepository.createStatus).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockStatusRepository.createStatus).toHaveBeenCalledWith(1, input);
   });
 
   it('should return the created status from the repository', async () => {
     const input: BoardStatusInput = { name: 'To Do', order: 0, color: '#64748b' };
     mockStatusRepository.createStatus.mockResolvedValue(boardStatus);
 
-    const result = await useCase.execute('valid-token', 1, input);
+    const result = await useCase.execute(1, input);
 
     expect(result).toEqual(boardStatus);
   });
@@ -41,7 +41,7 @@ describe('CreateStatusUseCase', () => {
     const input: BoardStatusInput = { name: '', order: 0, color: '' };
     mockStatusRepository.createStatus.mockRejectedValue(new Error('This field may not be blank.'));
 
-    await expect(useCase.execute('valid-token', 1, input)).rejects.toThrow(
+    await expect(useCase.execute(1, input)).rejects.toThrow(
       'This field may not be blank.'
     );
   });

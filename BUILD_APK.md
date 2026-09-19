@@ -121,12 +121,19 @@ Luego referenciarlo en `android/app/build.gradle` dentro del bloque `signingConf
 
 ## Nota de seguridad: tráfico cleartext
 
-`app.json` tiene `android.usesCleartextTraffic: true` para poder hablar con el
-backend local por HTTP plano durante desarrollo (`10.0.2.2:8080`, IP de LAN,
-etc.). Esto habilita HTTP sin cifrar para **toda** la app, no solo para el
-host de desarrollo. Antes de un release real a producción, hay que:
+El plugin `plugins/withScopedCleartextTraffic.js` instala un
+`network_security_config.xml` que permite HTTP sin cifrar **solo** hacia
+`10.0.2.2` (alias del host desde el emulador Android), `localhost` y
+`127.0.0.1` — las direcciones donde vive un backend local de desarrollo.
+Cualquier otro host, incluido el de producción, solo puede hablarse por
+HTTPS. Esto reemplaza el `android.usesCleartextTraffic: true` que existía
+antes, que habilitaba HTTP sin cifrar para **toda** la app.
 
-- Apuntar `API_BASE_URL` a un backend HTTPS, y
-- Quitar `usesCleartextTraffic` (o reemplazarlo por un
-  `network_security_config.xml` que solo permita cleartext para el dominio
-  de desarrollo) para no dejar la app aceptando HTTP plano en producción.
+`src/shared/config/api.ts` además rechaza arrancar en un build de producción
+(`__DEV__ === false`) si `API_BASE_URL` no empieza con `https://`, como
+segunda barrera independiente de la config de Android/iOS.
+
+Si necesitás probar contra un backend en tu IP de LAN (en vez de
+`10.0.2.2`) desde un dispositivo físico, agregá temporalmente esa IP al
+`domain-config` del plugin — no la dejes en el archivo al hacer un build de
+producción.

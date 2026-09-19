@@ -4,7 +4,7 @@ import { dependencies } from '@/shared/di/dependencies';
 import { useCallback, useEffect, useState } from 'react';
 
 export function useBoardDetailViewModel(boardId: number) {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [board, setBoard] = useState<Board | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +12,7 @@ export function useBoardDetailViewModel(boardId: number) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const loadBoard = useCallback(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       return;
     }
 
@@ -20,7 +20,7 @@ export function useBoardDetailViewModel(boardId: number) {
     setError(null);
 
     return dependencies.getBoardUseCase
-      .execute(token, boardId)
+      .execute(boardId)
       .then((payload) => {
         setBoard(payload);
       })
@@ -30,21 +30,21 @@ export function useBoardDetailViewModel(boardId: number) {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [token, boardId]);
+  }, [isAuthenticated, boardId]);
 
   useEffect(() => {
     loadBoard();
   }, [loadBoard]);
 
   const deleteBoard = async (): Promise<void> => {
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setIsDeleting(true);
     setDeleteError(null);
     try {
-      await dependencies.deleteBoardUseCase.execute(token, boardId);
+      await dependencies.deleteBoardUseCase.execute(boardId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo eliminar el tablero.';
       setDeleteError(message);

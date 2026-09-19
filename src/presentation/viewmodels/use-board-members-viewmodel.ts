@@ -4,7 +4,7 @@ import { dependencies } from '@/shared/di/dependencies';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export function useBoardMembersViewModel(boardId: number) {
-  const { token, userId } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
   const [members, setMembers] = useState<BoardMembership[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -19,7 +19,7 @@ export function useBoardMembersViewModel(boardId: number) {
 
   const loadPage = useCallback(
     (pageNumber: number, append: boolean) => {
-      if (!token) return;
+      if (!isAuthenticated) return;
 
       if (append) {
         setIsLoadingMore(true);
@@ -29,7 +29,7 @@ export function useBoardMembersViewModel(boardId: number) {
       setError(null);
 
       return dependencies.getMembersUseCase
-        .execute(token, boardId, pageNumber)
+        .execute(boardId, pageNumber)
         .then((result) => {
           setMembers((prev) => (append ? [...prev, ...result.results] : result.results));
           setHasMore(Boolean(result.next));
@@ -46,7 +46,7 @@ export function useBoardMembersViewModel(boardId: number) {
           }
         });
     },
-    [token, boardId]
+    [isAuthenticated, boardId]
   );
 
   useEffect(() => {
@@ -73,13 +73,13 @@ export function useBoardMembersViewModel(boardId: number) {
       throw new Error('El correo electrónico es obligatorio');
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setIsInviting(true);
     try {
-      await dependencies.addMemberUseCase.execute(token, boardId, { email: inviteEmail.trim() });
+      await dependencies.addMemberUseCase.execute(boardId, { email: inviteEmail.trim() });
       setInviteEmail('');
       await loadPage(1, false);
     } catch (err) {
@@ -92,14 +92,14 @@ export function useBoardMembersViewModel(boardId: number) {
   };
 
   const removeMember = async (membershipId: number): Promise<void> => {
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setRemovingId(membershipId);
     setRemoveError(null);
     try {
-      await dependencies.removeMemberUseCase.execute(token, boardId, membershipId);
+      await dependencies.removeMemberUseCase.execute(boardId, membershipId);
       await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo quitar al miembro.';

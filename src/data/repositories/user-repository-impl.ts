@@ -6,7 +6,7 @@ import { UserRepository } from '@/domain/repositories/user-repository';
 export class UserRepositoryImpl implements UserRepository {
   constructor(private readonly dataSource: UserDataSource) {}
 
-  fetchUsers(token: string, page: number): Promise<PaginatedResponse<User>> {
-    return this.dataSource.fetchUsers(token, page);
+  fetchUsers(page: number): Promise<PaginatedResponse<User>> {
+    return this.dataSource.fetchUsers(page);
   }
 }

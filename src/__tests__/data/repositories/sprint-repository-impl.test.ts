@@ -13,8 +13,8 @@ const mockDataSource: jest.Mocked<SprintDataSource> = {
 const sprint: Sprint = {
   id: 1,
   name: 'Sprint 1',
-  start_date: '2026-01-01',
-  end_date: '2026-01-14',
+  startDate: '2026-01-01',
+  endDate: '2026-01-14',
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
 };
@@ -31,43 +31,43 @@ describe('SprintRepositoryImpl', () => {
     const page: PaginatedResponse<Sprint> = { count: 1, next: null, previous: null, results: [sprint] };
     mockDataSource.fetchSprints.mockResolvedValue(page);
 
-    const result = await repository.fetchSprints('valid-token', 1, 1);
+    const result = await repository.fetchSprints(1, 1);
 
-    expect(mockDataSource.fetchSprints).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockDataSource.fetchSprints).toHaveBeenCalledWith(1, 1);
     expect(result).toEqual(page);
   });
 
   it('should delegate createSprint to the data source', async () => {
-    const input: SprintInput = { name: 'Sprint 1', start_date: null, end_date: null };
+    const input: SprintInput = { name: 'Sprint 1', startDate: null, endDate: null };
     mockDataSource.createSprint.mockResolvedValue(sprint);
 
-    const result = await repository.createSprint('valid-token', 1, input);
+    const result = await repository.createSprint(1, input);
 
-    expect(mockDataSource.createSprint).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockDataSource.createSprint).toHaveBeenCalledWith(1, input);
     expect(result).toEqual(sprint);
   });
 
   it('should delegate updateSprint to the data source', async () => {
-    const input: SprintInput = { name: 'Sprint 1 renamed', start_date: null, end_date: null };
+    const input: SprintInput = { name: 'Sprint 1 renamed', startDate: null, endDate: null };
     mockDataSource.updateSprint.mockResolvedValue(sprint);
 
-    const result = await repository.updateSprint('valid-token', 1, 1, input);
+    const result = await repository.updateSprint(1, 1, input);
 
-    expect(mockDataSource.updateSprint).toHaveBeenCalledWith('valid-token', 1, 1, input);
+    expect(mockDataSource.updateSprint).toHaveBeenCalledWith(1, 1, input);
     expect(result).toEqual(sprint);
   });
 
   it('should delegate deleteSprint to the data source', async () => {
     mockDataSource.deleteSprint.mockResolvedValue(undefined);
 
-    await repository.deleteSprint('valid-token', 1, 1);
+    await repository.deleteSprint(1, 1);
 
-    expect(mockDataSource.deleteSprint).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockDataSource.deleteSprint).toHaveBeenCalledWith(1, 1);
   });
 
   it('should propagate errors from the data source', async () => {
     mockDataSource.fetchSprints.mockRejectedValue(new Error('Network error'));
 
-    await expect(repository.fetchSprints('some-token', 1, 1)).rejects.toThrow('Network error');
+    await expect(repository.fetchSprints(1, 1)).rejects.toThrow('Network error');
   });
 });

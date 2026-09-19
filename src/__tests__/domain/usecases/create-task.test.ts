@@ -12,11 +12,11 @@ const mockTaskRepository: jest.Mocked<TaskRepository> = {
 
 const task: Task = {
   id: 1,
-  board_id: 1,
+  boardId: 1,
   sprint: null,
   status: null,
-  user_id: 7,
-  assigned_to_id: null,
+  userId: 7,
+  assignedToId: null,
   title: 'New task',
   description: '',
   created: '2026-01-01T00:00:00Z',
@@ -31,32 +31,32 @@ describe('CreateTaskUseCase', () => {
     useCase = new CreateTaskUseCase(mockTaskRepository);
   });
 
-  it('should call taskRepository.createTask with the given token, board id and input', async () => {
+  it('should call taskRepository.createTask with the given board id and input', async () => {
     const input: TaskInput = {
       title: 'New task',
       description: '',
-      status_id: null,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: null,
+      sprintId: null,
+      assignedToId: null,
     };
     mockTaskRepository.createTask.mockResolvedValue(task);
 
-    await useCase.execute('valid-token', 1, input);
+    await useCase.execute(1, input);
 
-    expect(mockTaskRepository.createTask).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockTaskRepository.createTask).toHaveBeenCalledWith(1, input);
   });
 
   it('should return the created task from the repository', async () => {
     const input: TaskInput = {
       title: 'New task',
       description: '',
-      status_id: null,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: null,
+      sprintId: null,
+      assignedToId: null,
     };
     mockTaskRepository.createTask.mockResolvedValue(task);
 
-    const result = await useCase.execute('valid-token', 1, input);
+    const result = await useCase.execute(1, input);
 
     expect(result).toEqual(task);
   });
@@ -65,13 +65,13 @@ describe('CreateTaskUseCase', () => {
     const input: TaskInput = {
       title: '',
       description: '',
-      status_id: null,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: null,
+      sprintId: null,
+      assignedToId: null,
     };
     mockTaskRepository.createTask.mockRejectedValue(new Error('This field may not be blank.'));
 
-    await expect(useCase.execute('valid-token', 1, input)).rejects.toThrow(
+    await expect(useCase.execute(1, input)).rejects.toThrow(
       'This field may not be blank.'
     );
   });

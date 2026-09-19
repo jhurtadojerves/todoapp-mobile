@@ -12,8 +12,8 @@ const mockCommentRepository: jest.Mocked<CommentRepository> = {
 
 const comment: Comment = {
   id: 1,
-  task_id: 1,
-  user_id: 7,
+  taskId: 1,
+  userId: 7,
   content: 'Looks good to me.',
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
@@ -28,18 +28,18 @@ describe('GetCommentsUseCase', () => {
     useCase = new GetCommentsUseCase(mockCommentRepository);
   });
 
-  it('should call commentRepository.fetchComments with the given token, task id and page', async () => {
+  it('should call commentRepository.fetchComments with the given task id and page', async () => {
     mockCommentRepository.fetchComments.mockResolvedValue(page);
 
-    await useCase.execute('valid-token', 1, 1);
+    await useCase.execute(1, 1);
 
-    expect(mockCommentRepository.fetchComments).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockCommentRepository.fetchComments).toHaveBeenCalledWith(1, 1);
   });
 
   it('should return the paginated response from the repository', async () => {
     mockCommentRepository.fetchComments.mockResolvedValue(page);
 
-    const result = await useCase.execute('valid-token', 1, 1);
+    const result = await useCase.execute(1, 1);
 
     expect(result).toEqual(page);
   });
@@ -47,6 +47,6 @@ describe('GetCommentsUseCase', () => {
   it('should propagate errors thrown by the repository', async () => {
     mockCommentRepository.fetchComments.mockRejectedValue(new Error('Token is expired.'));
 
-    await expect(useCase.execute('expired-token', 1, 1)).rejects.toThrow('Token is expired.');
+    await expect(useCase.execute(1, 1)).rejects.toThrow('Token is expired.');
   });
 });

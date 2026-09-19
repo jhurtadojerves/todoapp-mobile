@@ -2,6 +2,8 @@
  * Integration tests: Task usecases → TaskRepositoryImpl → TaskDataSource
  * Only `fetch` is mocked (the real external boundary).
  */
+import MockAdapter from 'axios-mock-adapter';
+
 import { TaskDataSource } from '@/data/datasources/task-datasource';
 import { TaskRepositoryImpl } from '@/data/repositories/task-repository-impl';
 import { CreateTaskUseCase } from '@/domain/usecases/create-task';
@@ -10,17 +12,9 @@ import { GetTaskUseCase } from '@/domain/usecases/get-task';
 import { GetTasksUseCase } from '@/domain/usecases/get-tasks';
 import { UpdateTaskUseCase } from '@/domain/usecases/update-task';
 import { Task } from '@/domain/models/task';
+import { apiClient } from '@/shared/api/http-client';
 
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
-
-function mockResponse(status: number, body: unknown): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: jest.fn().mockResolvedValue(body),
-  } as unknown as Response;
-}
+const apiMock = new MockAdapter(apiClient);
 
 function buildDependencies() {
   const dataSource = new TaskDataSource();
@@ -36,11 +30,11 @@ function buildDependencies() {
 
 const task1: Task = {
   id: 1,
-  board_id: 1,
+  boardId: 1,
   sprint: null,
   status: { id: 1, name: 'To Do', color: '#64748b' },
-  user_id: 7,
-  assigned_to_id: null,
+  userId: 7,
+  assignedToId: null,
   title: 'Fix the login bug',
   description: '',
   created: '2026-01-01T00:00:00Z',
@@ -49,11 +43,11 @@ const task1: Task = {
 
 const task2: Task = {
   id: 2,
-  board_id: 1,
+  boardId: 1,
   sprint: { id: 1, name: 'Sprint 1' },
   status: null,
-  user_id: 7,
-  assigned_to_id: 3,
+  userId: 7,
+  assignedToId: 3,
   title: 'Write onboarding docs',
   description: 'Cover the register flow',
   created: '2026-01-02T00:00:00Z',
@@ -61,45 +55,43 @@ const task2: Task = {
 };
 
 describe('Tasks flow (integration)', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    apiMock.reset();
+    jest.clearAllMocks();
+  });
 
   it('should list the first page of tasks', async () => {
     const { getTasksUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(
-      mockResponse(200, { count: 2, next: 'http://api/tasks/?page=2', previous: null, results: [task1, task2] })
-    );
+    apiMock
+      .onAny()
+      .reply(200, { count: 2, next: 'http://api/tasks/?page=2', previous: null, results: [task1, task2] });
 
-    const result = await getTasksUseCase.execute('valid-token', 1, 1);
+    const result = await getTasksUseCase.execute(1, 1);
 
     expect(result.results).toEqual([task1, task2]);
     expect(result.next).toBe('http://api/tasks/?page=2');
   });
 
-  it('should filter tasks by status/sprint/assigned_to', async () => {
+  it('should filter tasks by status/sprint/assignedTo', async () => {
     const { getTasksUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(
-      mockResponse(200, { count: 1, next: null, previous: null, results: [task1] })
-    );
+    apiMock.onAny().reply(200, { count: 1, next: null, previous: null, results: [task1] });
 
-    const result = await getTasksUseCase.execute('valid-token', 1, 1, { status: 1 });
+    const result = await getTasksUseCase.execute(1, 1, { status: 1 });
 
     expect(result.results).toEqual([task1]);
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('status=1'),
-      expect.anything()
-    );
+    expect(apiMock.history.get[0].url).toContain('status=1');
   });
 
   it('should create a task with only a title', async () => {
     const { createTaskUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(201, task1));
+    apiMock.onAny().reply(201, task1);
 
-    const result = await createTaskUseCase.execute('valid-token', 1, {
+    const result = await createTaskUseCase.execute(1, {
       title: task1.title,
       description: '',
-      status_id: null,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: null,
+      sprintId: null,
+      assignedToId: null,
     });
 
     expect(result).toEqual(task1);
@@ -107,9 +99,9 @@ describe('Tasks flow (integration)', () => {
 
   it('should fetch a single task by id', async () => {
     const { getTaskUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(200, task2));
+    apiMock.onAny().reply(200, task2);
 
-    const result = await getTaskUseCase.execute('valid-token', 2);
+    const result = await getTaskUseCase.execute(2);
 
     expect(result).toEqual(task2);
   });
@@ -117,14 +109,14 @@ describe('Tasks flow (integration)', () => {
   it('should update a task', async () => {
     const { updateTaskUseCase } = buildDependencies();
     const updated = { ...task1, title: 'Fix the login bug (urgent)' };
-    mockFetch.mockResolvedValue(mockResponse(200, updated));
+    apiMock.onAny().reply(200, updated);
 
-    const result = await updateTaskUseCase.execute('valid-token', 1, {
+    const result = await updateTaskUseCase.execute(1, {
       title: 'Fix the login bug (urgent)',
       description: '',
-      status_id: 1,
-      sprint_id: null,
-      assigned_to_id: null,
+      statusId: 1,
+      sprintId: null,
+      assignedToId: null,
     });
 
     expect(result).toEqual(updated);
@@ -132,8 +124,8 @@ describe('Tasks flow (integration)', () => {
 
   it('should delete a task', async () => {
     const { deleteTaskUseCase } = buildDependencies();
-    mockFetch.mockResolvedValue(mockResponse(204, null));
+    apiMock.onAny().reply(204);
 
-    await expect(deleteTaskUseCase.execute('valid-token', 1)).resolves.toBeUndefined();
+    await expect(deleteTaskUseCase.execute(1)).resolves.toBeUndefined();
   });
 });

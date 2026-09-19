@@ -126,7 +126,10 @@ export function useAuthSession() {
   }, [clearTokens]);
 
   useEffect(() => {
-    registerAuthHooks({ refreshAccessToken, onUnauthorized });
+    // maxRefreshRetries: how many times apiFetch retries a request that keeps
+    // coming back 401 after a refresh. 1 is enough in practice — if a fresh
+    // token still gets rejected, the session is invalid, not transiently stale.
+    registerAuthHooks({ refreshAccessToken, onUnauthorized, maxRefreshRetries: 1 });
     return () => registerAuthHooks(null);
   }, [refreshAccessToken, onUnauthorized]);
 

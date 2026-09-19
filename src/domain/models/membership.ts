@@ -1,18 +1,28 @@
-export type BoardRole = 'owner' | 'member';
+import { z } from 'zod';
 
-export interface UserBrief {
-  id: number;
-  username: string;
-  email: string;
-}
+export const boardRoleSchema = z.enum(['owner', 'member']);
 
-export interface BoardMembership {
-  id: number;
-  board_id: number;
-  user: UserBrief;
-  role: BoardRole;
-  created: string;
-}
+export type BoardRole = z.infer<typeof boardRoleSchema>;
+
+/** Generated model: the TS type and the runtime (de)serializer both derive from this one schema. */
+export const userBriefSchema = z.object({
+  id: z.number(),
+  username: z.string(),
+  email: z.string(),
+});
+
+export type UserBrief = z.infer<typeof userBriefSchema>;
+
+/** Generated model: the TS type and the runtime (de)serializer both derive from this one schema. */
+export const boardMembershipSchema = z.object({
+  id: z.number(),
+  boardId: z.number(),
+  user: userBriefSchema,
+  role: boardRoleSchema,
+  created: z.string(),
+});
+
+export type BoardMembership = z.infer<typeof boardMembershipSchema>;
 
 export interface BoardMembershipInput {
   email: string;

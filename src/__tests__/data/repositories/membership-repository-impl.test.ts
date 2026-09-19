@@ -11,7 +11,7 @@ const mockDataSource: jest.Mocked<MembershipDataSource> = {
 
 const membership: BoardMembership = {
   id: 5,
-  board_id: 1,
+  boardId: 1,
   user: { id: 2, username: 'jane', email: 'jane@example.com' },
   role: 'member',
   created: '2026-01-01T00:00:00Z',
@@ -29,9 +29,9 @@ describe('MembershipRepositoryImpl', () => {
     const page: PaginatedResponse<BoardMembership> = { count: 1, next: null, previous: null, results: [membership] };
     mockDataSource.fetchMembers.mockResolvedValue(page);
 
-    const result = await repository.fetchMembers('valid-token', 1, 1);
+    const result = await repository.fetchMembers(1, 1);
 
-    expect(mockDataSource.fetchMembers).toHaveBeenCalledWith('valid-token', 1, 1);
+    expect(mockDataSource.fetchMembers).toHaveBeenCalledWith(1, 1);
     expect(result).toEqual(page);
   });
 
@@ -39,23 +39,23 @@ describe('MembershipRepositoryImpl', () => {
     const input: BoardMembershipInput = { email: 'jane@example.com' };
     mockDataSource.addMember.mockResolvedValue(membership);
 
-    const result = await repository.addMember('valid-token', 1, input);
+    const result = await repository.addMember(1, input);
 
-    expect(mockDataSource.addMember).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockDataSource.addMember).toHaveBeenCalledWith(1, input);
     expect(result).toEqual(membership);
   });
 
   it('should delegate removeMember to the data source', async () => {
     mockDataSource.removeMember.mockResolvedValue(undefined);
 
-    await repository.removeMember('valid-token', 1, 5);
+    await repository.removeMember(1, 5);
 
-    expect(mockDataSource.removeMember).toHaveBeenCalledWith('valid-token', 1, 5);
+    expect(mockDataSource.removeMember).toHaveBeenCalledWith(1, 5);
   });
 
   it('should propagate errors from the data source', async () => {
     mockDataSource.fetchMembers.mockRejectedValue(new Error('Network error'));
 
-    await expect(repository.fetchMembers('some-token', 1, 1)).rejects.toThrow('Network error');
+    await expect(repository.fetchMembers(1, 1)).rejects.toThrow('Network error');
   });
 });

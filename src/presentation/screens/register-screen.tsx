@@ -75,8 +75,8 @@ export function RegisterScreen() {
               placeholder="Nombre"
               autoCapitalize="words"
               textContentType="givenName"
-              value={credentials.first_name}
-              onChangeText={(value) => setField('first_name', value)}
+              value={credentials.firstName}
+              onChangeText={(value) => setField('firstName', value)}
             />
           </YStack>
 
@@ -85,8 +85,8 @@ export function RegisterScreen() {
               placeholder="Apellido"
               autoCapitalize="words"
               textContentType="familyName"
-              value={credentials.last_name}
-              onChangeText={(value) => setField('last_name', value)}
+              value={credentials.lastName}
+              onChangeText={(value) => setField('lastName', value)}
             />
           </YStack>
 

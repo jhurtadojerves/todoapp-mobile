@@ -15,12 +15,12 @@ describe('RemoveMemberUseCase', () => {
     useCase = new RemoveMemberUseCase(mockMembershipRepository);
   });
 
-  it('should call membershipRepository.removeMember with the given token, board id and membership id', async () => {
+  it('should call membershipRepository.removeMember with the given board id and membership id', async () => {
     mockMembershipRepository.removeMember.mockResolvedValue(undefined);
 
-    await useCase.execute('valid-token', 1, 5);
+    await useCase.execute(1, 5);
 
-    expect(mockMembershipRepository.removeMember).toHaveBeenCalledWith('valid-token', 1, 5);
+    expect(mockMembershipRepository.removeMember).toHaveBeenCalledWith(1, 5);
   });
 
   it('should propagate errors thrown by the repository', async () => {
@@ -28,7 +28,7 @@ describe('RemoveMemberUseCase', () => {
       new Error('You do not have permission to perform this action.')
     );
 
-    await expect(useCase.execute('valid-token', 1, 5)).rejects.toThrow(
+    await expect(useCase.execute(1, 5)).rejects.toThrow(
       'You do not have permission to perform this action.'
     );
   });

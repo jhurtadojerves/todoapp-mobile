@@ -5,7 +5,7 @@ import { UserRepository } from '@/domain/repositories/user-repository';
 export class GetUsersUseCase {
   constructor(private readonly userRepository: UserRepository) {}
 
-  execute(token: string, page: number): Promise<PaginatedResponse<User>> {
-    return this.userRepository.fetchUsers(token, page);
+  execute(page: number): Promise<PaginatedResponse<User>> {
+    return this.userRepository.fetchUsers(page);
   }
 }

@@ -6,19 +6,19 @@ import { SprintRepository } from '@/domain/repositories/sprint-repository';
 export class SprintRepositoryImpl implements SprintRepository {
   constructor(private readonly dataSource: SprintDataSource) {}
 
-  fetchSprints(token: string, boardId: number, page: number): Promise<PaginatedResponse<Sprint>> {
-    return this.dataSource.fetchSprints(token, boardId, page);
+  fetchSprints(boardId: number, page: number): Promise<PaginatedResponse<Sprint>> {
+    return this.dataSource.fetchSprints(boardId, page);
   }
 
-  createSprint(token: string, boardId: number, input: SprintInput): Promise<Sprint> {
-    return this.dataSource.createSprint(token, boardId, input);
+  createSprint(boardId: number, input: SprintInput): Promise<Sprint> {
+    return this.dataSource.createSprint(boardId, input);
   }
 
-  updateSprint(token: string, boardId: number, id: number, input: SprintInput): Promise<Sprint> {
-    return this.dataSource.updateSprint(token, boardId, id, input);
+  updateSprint(boardId: number, id: number, input: SprintInput): Promise<Sprint> {
+    return this.dataSource.updateSprint(boardId, id, input);
   }
 
-  deleteSprint(token: string, boardId: number, id: number): Promise<void> {
-    return this.dataSource.deleteSprint(token, boardId, id);
+  deleteSprint(boardId: number, id: number): Promise<void> {
+    return this.dataSource.deleteSprint(boardId, id);
   }
 }

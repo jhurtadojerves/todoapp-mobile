@@ -14,8 +14,8 @@ export function useRegisterViewModel() {
     email: '',
     password: '',
     password2: '',
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
@@ -83,7 +83,7 @@ export function useRegisterViewModel() {
     const timeoutId = setTimeout(async () => {
       try {
         const result = await dependencies.validatePasswordUseCase.execute(credentials.password);
-        if (!result.is_valid) {
+        if (!result.isValid) {
           setPasswordValidationErrors(result.errors);
           setPasswordError('La contraseña no cumple los requisitos');
         } else {
@@ -130,8 +130,8 @@ export function useRegisterViewModel() {
       !credentials.username ||
       !credentials.email ||
       !credentials.password ||
-      !credentials.first_name ||
-      !credentials.last_name
+      !credentials.firstName ||
+      !credentials.lastName
     ) {
       setError('Todos los campos son obligatorios');
       throw new Error('Todos los campos son obligatorios');
@@ -172,8 +172,8 @@ export function useRegisterViewModel() {
     credentials.email &&
     credentials.password &&
     credentials.password2 &&
-    credentials.first_name &&
-    credentials.last_name &&
+    credentials.firstName &&
+    credentials.lastName &&
     !usernameError &&
     !emailError &&
     !passwordError &&

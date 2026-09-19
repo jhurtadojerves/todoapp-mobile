@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 const DEFAULT_COLOR = '#64748b';
 
 export function useBoardStatusesViewModel(boardId: number) {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [statuses, setStatuses] = useState<BoardStatus[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -28,7 +28,7 @@ export function useBoardStatusesViewModel(boardId: number) {
 
   const loadPage = useCallback(
     (pageNumber: number, append: boolean) => {
-      if (!token) return;
+      if (!isAuthenticated) return;
 
       if (append) {
         setIsLoadingMore(true);
@@ -38,7 +38,7 @@ export function useBoardStatusesViewModel(boardId: number) {
       setError(null);
 
       return dependencies.getStatusesUseCase
-        .execute(token, boardId, pageNumber)
+        .execute(boardId, pageNumber)
         .then((result) => {
           setStatuses((prev) => (append ? [...prev, ...result.results] : result.results));
           setHasMore(Boolean(result.next));
@@ -55,7 +55,7 @@ export function useBoardStatusesViewModel(boardId: number) {
           }
         });
     },
-    [token, boardId]
+    [isAuthenticated, boardId]
   );
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export function useBoardStatusesViewModel(boardId: number) {
       throw new Error('El nombre es obligatorio');
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
@@ -87,7 +87,7 @@ export function useBoardStatusesViewModel(boardId: number) {
         order: statuses.length,
         color: DEFAULT_COLOR,
       };
-      await dependencies.createStatusUseCase.execute(token, boardId, input);
+      await dependencies.createStatusUseCase.execute(boardId, input);
       setNewName('');
       await loadPage(1, false);
     } catch (err) {
@@ -120,7 +120,7 @@ export function useBoardStatusesViewModel(boardId: number) {
       throw new Error('El nombre es obligatorio');
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
@@ -132,7 +132,7 @@ export function useBoardStatusesViewModel(boardId: number) {
         order: target?.order ?? 0,
         color: target?.color ?? DEFAULT_COLOR,
       };
-      await dependencies.updateStatusUseCase.execute(token, boardId, editingId, input);
+      await dependencies.updateStatusUseCase.execute(boardId, editingId, input);
       cancelEdit();
       await loadPage(1, false);
     } catch (err) {
@@ -145,14 +145,14 @@ export function useBoardStatusesViewModel(boardId: number) {
   };
 
   const deleteStatus = async (id: number): Promise<void> => {
-    if (!token) {
+    if (!isAuthenticated) {
       throw new Error('No hay una sesión activa.');
     }
 
     setDeletingId(id);
     setDeleteError(null);
     try {
-      await dependencies.deleteStatusUseCase.execute(token, boardId, id);
+      await dependencies.deleteStatusUseCase.execute(boardId, id);
       await loadPage(1, false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo eliminar el estado.';

@@ -11,8 +11,8 @@ const mockCommentRepository: jest.Mocked<CommentRepository> = {
 
 const comment: Comment = {
   id: 1,
-  task_id: 1,
-  user_id: 7,
+  taskId: 1,
+  userId: 7,
   content: 'Looks good to me.',
   created: '2026-01-01T00:00:00Z',
   modified: '2026-01-01T00:00:00Z',
@@ -26,20 +26,20 @@ describe('CreateCommentUseCase', () => {
     useCase = new CreateCommentUseCase(mockCommentRepository);
   });
 
-  it('should call commentRepository.createComment with the given token, task id and input', async () => {
+  it('should call commentRepository.createComment with the given task id and input', async () => {
     const input: CommentInput = { content: 'Looks good to me.' };
     mockCommentRepository.createComment.mockResolvedValue(comment);
 
-    await useCase.execute('valid-token', 1, input);
+    await useCase.execute(1, input);
 
-    expect(mockCommentRepository.createComment).toHaveBeenCalledWith('valid-token', 1, input);
+    expect(mockCommentRepository.createComment).toHaveBeenCalledWith(1, input);
   });
 
   it('should return the created comment from the repository', async () => {
     const input: CommentInput = { content: 'Looks good to me.' };
     mockCommentRepository.createComment.mockResolvedValue(comment);
 
-    const result = await useCase.execute('valid-token', 1, input);
+    const result = await useCase.execute(1, input);
 
     expect(result).toEqual(comment);
   });
@@ -48,7 +48,7 @@ describe('CreateCommentUseCase', () => {
     const input: CommentInput = { content: '' };
     mockCommentRepository.createComment.mockRejectedValue(new Error('This field may not be blank.'));
 
-    await expect(useCase.execute('valid-token', 1, input)).rejects.toThrow(
+    await expect(useCase.execute(1, input)).rejects.toThrow(
       'This field may not be blank.'
     );
   });

@@ -5,7 +5,7 @@ import { MembershipRepository } from '@/domain/repositories/membership-repositor
 export class GetMembersUseCase {
   constructor(private readonly membershipRepository: MembershipRepository) {}
 
-  execute(token: string, boardId: number, page: number): Promise<PaginatedResponse<BoardMembership>> {
-    return this.membershipRepository.fetchMembers(token, boardId, page);
+  execute(boardId: number, page: number): Promise<PaginatedResponse<BoardMembership>> {
+    return this.membershipRepository.fetchMembers(boardId, page);
   }
 }

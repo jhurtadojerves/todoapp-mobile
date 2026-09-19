@@ -12,9 +12,9 @@ const mockUsers: User[] = [
     id: 1,
     username: 'john',
     email: 'john@example.com',
-    first_name: 'John',
-    last_name: 'Doe',
-    date_joined: '2024-01-01',
+    firstName: 'John',
+    lastName: 'Doe',
+    dateJoined: '2024-01-01',
     profile: { bio: 'Developer' },
   },
   {
@@ -35,20 +35,19 @@ describe('GetUsersUseCase', () => {
     useCase = new GetUsersUseCase(mockUserRepository);
   });
 
-  it('should call userRepository.fetchUsers with the given token and page', async () => {
-    const token = 'valid-access-token';
+  it('should call userRepository.fetchUsers with the given page', async () => {
     mockUserRepository.fetchUsers.mockResolvedValue(page);
 
-    await useCase.execute(token, 1);
+    await useCase.execute(1);
 
     expect(mockUserRepository.fetchUsers).toHaveBeenCalledTimes(1);
-    expect(mockUserRepository.fetchUsers).toHaveBeenCalledWith(token, 1);
+    expect(mockUserRepository.fetchUsers).toHaveBeenCalledWith(1);
   });
 
   it('should return the paginated response from the repository', async () => {
     mockUserRepository.fetchUsers.mockResolvedValue(page);
 
-    const result = await useCase.execute('valid-access-token', 1);
+    const result = await useCase.execute(1);
 
     expect(result.results).toEqual(mockUsers);
     expect(result.results).toHaveLength(2);
@@ -57,7 +56,7 @@ describe('GetUsersUseCase', () => {
   it('should return an empty results array when there are no users', async () => {
     mockUserRepository.fetchUsers.mockResolvedValue(emptyPage);
 
-    const result = await useCase.execute('valid-access-token', 1);
+    const result = await useCase.execute(1);
 
     expect(result.results).toEqual([]);
   });
@@ -65,6 +64,6 @@ describe('GetUsersUseCase', () => {
   it('should propagate errors thrown by the repository', async () => {
     mockUserRepository.fetchUsers.mockRejectedValue(new Error('Unauthorized'));
 
-    await expect(useCase.execute('invalid-token', 1)).rejects.toThrow('Unauthorized');
+    await expect(useCase.execute(1)).rejects.toThrow('Unauthorized');
   });
 });

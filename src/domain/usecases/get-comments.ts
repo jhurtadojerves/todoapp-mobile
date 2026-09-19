@@ -5,7 +5,7 @@ import { CommentRepository } from '@/domain/repositories/comment-repository';
 export class GetCommentsUseCase {
   constructor(private readonly commentRepository: CommentRepository) {}
 
-  execute(token: string, taskId: number, page: number): Promise<PaginatedResponse<Comment>> {
-    return this.commentRepository.fetchComments(token, taskId, page);
+  execute(taskId: number, page: number): Promise<PaginatedResponse<Comment>> {
+    return this.commentRepository.fetchComments(taskId, page);
   }
 }

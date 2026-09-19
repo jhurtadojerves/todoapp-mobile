@@ -4,7 +4,7 @@ import { dependencies } from '@/shared/di/dependencies';
 import { useCallback, useEffect, useState } from 'react';
 
 export function useUsersViewModel() {
-  const { token, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -14,7 +14,7 @@ export function useUsersViewModel() {
 
   const loadPage = useCallback(
     (pageNumber: number, append: boolean) => {
-      if (!token) {
+      if (!isAuthenticated) {
         setUsers([]);
         return;
       }
@@ -27,7 +27,7 @@ export function useUsersViewModel() {
       setError(null);
 
       return dependencies.getUsersUseCase
-        .execute(token, pageNumber)
+        .execute(pageNumber)
         .then((result) => {
           setUsers((prev) => (append ? [...prev, ...result.results] : result.results));
           setHasMore(Boolean(result.next));
@@ -44,7 +44,7 @@ export function useUsersViewModel() {
           }
         });
     },
-    [token]
+    [isAuthenticated]
   );
 
   useEffect(() => {
