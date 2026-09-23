@@ -56,10 +56,13 @@ export function TaskDetailScreen({ boardId, taskId }: Props) {
     error: attachmentsError,
     isCapturing,
     captureError,
+    isCameraPermissionBlocked,
+    locationWarning,
     deletingId: deletingAttachmentId,
     deleteError: deleteAttachmentError,
     captureAttachment,
     deleteAttachment,
+    openAppSettings,
   } = useTaskAttachmentsViewModel(taskId);
 
   const handleDelete = async () => {
@@ -186,9 +189,53 @@ export function TaskDetailScreen({ boardId, taskId }: Props) {
                 />
 
                 {captureError ? (
-                  <Paragraph color="$danger" fontSize={13}>
-                    {captureError}
-                  </Paragraph>
+                  <YStack
+                    backgroundColor="$backgroundSoft"
+                    borderRadius="$3"
+                    borderWidth={1}
+                    borderColor="$danger"
+                    padding="$3"
+                    gap="$2"
+                  >
+                    <Paragraph color="$danger" fontSize={13}>
+                      {captureError}
+                    </Paragraph>
+                    {isCameraPermissionBlocked ? (
+                      <Paragraph
+                        color="$primary"
+                        fontSize={13}
+                        fontWeight="700"
+                        textDecorationLine="underline"
+                        onPress={openAppSettings}
+                      >
+                        Abrir configuración del sistema
+                      </Paragraph>
+                    ) : null}
+                  </YStack>
+                ) : null}
+
+                {locationWarning ? (
+                  <YStack
+                    backgroundColor="$backgroundSoft"
+                    borderRadius="$3"
+                    borderWidth={1}
+                    borderColor="$border"
+                    padding="$3"
+                    gap="$2"
+                  >
+                    <Paragraph color="$muted" fontSize={13}>
+                      {locationWarning}
+                    </Paragraph>
+                    <Paragraph
+                      color="$primary"
+                      fontSize={13}
+                      fontWeight="700"
+                      textDecorationLine="underline"
+                      onPress={openAppSettings}
+                    >
+                      Abrir configuración del sistema
+                    </Paragraph>
+                  </YStack>
                 ) : null}
 
                 {deleteAttachmentError ? (

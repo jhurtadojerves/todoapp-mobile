@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 
 import { TaskAttachment } from '@/domain/models/attachment';
 import { dependencies } from '@/shared/di/dependencies';
@@ -13,6 +13,9 @@ export function useTaskAttachmentsViewModel(taskId: number) {
 
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureError, setCaptureError] = useState<string | null>(null);
+  const [isCameraPermissionBlocked, setIsCameraPermissionBlocked] = useState(false);
+  const [locationWarning, setLocationWarning] = useState<string | null>(null);
+  const [isLocationPermissionBlocked, setIsLocationPermissionBlocked] = useState(false);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -35,6 +38,9 @@ export function useTaskAttachmentsViewModel(taskId: number) {
 
   const captureAttachment = async (): Promise<void> => {
     setCaptureError(null);
+    setIsCameraPermissionBlocked(false);
+    setLocationWarning(null);
+    setIsLocationPermissionBlocked(false);
 
     if (Platform.OS === 'web') {
       setCaptureError('La cámara y el GPS solo están disponibles en la app móvil.');
@@ -45,6 +51,12 @@ export function useTaskAttachmentsViewModel(taskId: number) {
     try {
       const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
       if (!cameraPermission.granted) {
+        if (!cameraPermission.canAskAgain) {
+          setIsCameraPermissionBlocked(true);
+          throw new Error(
+            'El permiso de cámara está bloqueado. Es necesario habilitarlo en la configuración del sistema para tomar fotos.'
+          );
+        }
         throw new Error('Se necesita permiso de cámara para tomar la foto.');
       }
 
@@ -66,6 +78,11 @@ export function useTaskAttachmentsViewModel(taskId: number) {
           longitude = position.coords.longitude;
         } catch {
         }
+      } else {
+        setIsLocationPermissionBlocked(!locationPermission.canAskAgain);
+        setLocationWarning(
+          'La foto se guardó sin ubicación porque el permiso de GPS está desactivado. Es opcional, pero se puede activar manualmente en la configuración del sistema.'
+        );
       }
 
       await dependencies.addTaskAttachmentUseCase.execute(taskId, {
@@ -80,6 +97,10 @@ export function useTaskAttachmentsViewModel(taskId: number) {
       setIsCapturing(false);
     }
   };
+
+  const openAppSettings = useCallback(() => {
+    Linking.openSettings();
+  }, []);
 
   const deleteAttachment = async (id: string): Promise<void> => {
     setDeleteError(null);
@@ -100,9 +121,13 @@ export function useTaskAttachmentsViewModel(taskId: number) {
     error,
     isCapturing,
     captureError,
+    isCameraPermissionBlocked,
+    locationWarning,
+    isLocationPermissionBlocked,
     deletingId,
     deleteError,
     captureAttachment,
     deleteAttachment,
+    openAppSettings,
   };
 }
