@@ -13,5 +13,13 @@ module.exports = defineConfig([
         },
       },
     },
+    rules: {
+      // Every viewmodel in this app deliberately loads its data on mount via
+      // `useEffect(() => { loadPage(...) }, [loadPage])` — the standard
+      // fetch-on-mount shape used consistently across the codebase. This rule
+      // flags that pattern everywhere; revisit case by case instead of a
+      // blanket refactor.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ]);

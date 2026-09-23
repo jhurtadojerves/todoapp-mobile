@@ -1,4 +1,4 @@
-import { Input, type InputProps } from 'tamagui';
+import { Input, type ColorTokens, type InputProps } from 'tamagui';
 
 export type AppInputProps = InputProps;
 
@@ -15,7 +15,9 @@ export function AppInput(props: AppInputProps) {
     color = '#0f172a',
     fontSize = 16,
     lineHeight = 22,
-    placeholderTextColor = '#334155',
+    // Tamagui 2's InputProps types this as ColorTokens-only, but the underlying
+    // RN TextInput accepts any ColorValue at runtime — cast to keep the exact shade.
+    placeholderTextColor = '#334155' as ColorTokens,
     selectionColor = '$primary',
     cursorColor = '$primary',
     focusStyle = { borderColor: '$primary', backgroundColor: '#ffffff' },
