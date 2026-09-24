@@ -1,0 +1,13 @@
+# Signing out from the header menu locks the protected tabs behind the login form again.
+appId: com.jhurtadojerves.todoapp
+name: Cerrar sesión
+tags:
+  - auth
+---
+- runFlow: ../subflows/login.yaml
+- tapOn: "≡"
+- tapOn: "Cerrar sesión"
+- assertVisible: "Bienvenido a TodoApp"
+- tapOn: "Boards"
+- assertVisible: "Acceder"
+- assertNotVisible: "Mis tableros"

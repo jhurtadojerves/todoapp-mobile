@@ -1,0 +1,20 @@
+# Wrong credentials: the backend error is shown and the user stays on the login form.
+appId: com.jhurtadojerves.todoapp
+name: Login con credenciales inválidas
+tags:
+  - auth
+---
+- launchApp:
+    clearState: true
+- tapOn: "Users"
+- tapOn: "Correo electrónico"
+- inputText: "no-existe@example.com"
+- tapOn: "Contraseña"
+- inputText: "contraseña-incorrecta"
+- hideKeyboard
+- tapOn: "Acceder"
+- extendedWaitUntil:
+    visible: "No active account found.*"
+    timeout: 15000
+- assertVisible: "Acceder"
+- assertNotVisible: "Listado de usuarios"

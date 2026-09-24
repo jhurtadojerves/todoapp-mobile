@@ -22,4 +22,12 @@ module.exports = defineConfig([
       'react-hooks/set-state-in-effect': 'off',
     },
   },
+  {
+    files: ['src/__tests__/**', 'src/test-utils/**'],
+    rules: {
+      // jest.mock factories are hoisted above imports, so shared mocks can
+      // only be pulled in with require().
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 ]);

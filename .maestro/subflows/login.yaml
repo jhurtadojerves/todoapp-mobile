@@ -1,0 +1,16 @@
+# Starts the app from a clean state and signs in with the E2E test account.
+# Requires E2E_EMAIL and E2E_PASSWORD (pass them with `-e`, see .maestro/README.md).
+appId: com.jhurtadojerves.todoapp
+---
+- launchApp:
+    clearState: true
+- tapOn: "Users"
+- tapOn: "Correo electrónico"
+- inputText: ${E2E_EMAIL}
+- tapOn: "Contraseña"
+- inputText: ${E2E_PASSWORD}
+- hideKeyboard
+- tapOn: "Acceder"
+- extendedWaitUntil:
+    visible: "Listado de usuarios"
+    timeout: 15000
